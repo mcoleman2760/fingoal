@@ -1,0 +1,292 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f3f4f6;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+}
+
+/* Header */
+.header {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(to right, #4b0082, #00008b);
+  color: white;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.balance {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.subtext {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.icon {
+  font-size: 20px;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 20px;
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 14px;
+}
+
+.action span {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+
+/* Card Styles */
+.card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 15px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.insight {
+  font-size: 14px;
+  font-weight: 500;
+  gap: 10px;
+}
+
+/* Transactions */
+.transactions {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 20px;
+}
+
+.transaction {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.credit-icon {
+  font-size: 18px;
+}
+
+.right {
+  text-align: right;
+}
+
+.amount {
+  font-weight: bold;
+  margin: 0;
+}
+
+.time {
+  font-size: 12px;
+  color: gray;
+  margin: 0;
+}
+
+/* Transaction Page */
+.transaction-page {
+  font-family: Arial, sans-serif;
+  background: #f9f9f9;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top bar */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-bottom: 1px solid #eee;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Spending Overview */
+.spending-overview {
+  background: white;
+  padding: 20px;
+}
+
+.overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.amount-big {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.month-select {
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* Chart */
+.chart {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 20px;
+  height: 150px;
+}
+
+.bar {
+  width: 30px;
+  background: #ddd;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  font-size: 12px;
+  color: #555;
+  position: relative;
+}
+
+.bar span {
+  margin-top: 4px;
+}
+
+.bar.active {
+  background: purple;
+  color: black;
+}
+
+/* Transaction List */
+.transaction-list {
+  flex: 1;
+  background: linear-gradient(to right, #000, #1a1a40);
+  color: white;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.circle {
+  font-size: 20px;
+}
+
+.name {
+  margin: 0;
+  font-weight: bold;
+}
+
+.date {
+  margin: 0;
+  font-size: 12px;
+  color: #bbb;
+}
+
+.right {
+  font-weight: bold;
+}
