@@ -153,3 +153,21 @@ export default function Savings() {
     </div>
   );
 }
+
+// export a helper to get the user's overall progress
+export function getUserProgress() {
+  const goalsRaw = localStorage.getItem("goals");
+  const goals = goalsRaw ? JSON.parse(goalsRaw) : [];
+  
+  if (goals.length === 0) return 0;
+
+  // calculate overall progress as average of all goal percentages
+  const totalPct = goals.reduce((acc, g) => {
+    const net = Math.max(0, getNetForMonth(g.month));
+    const pct = Math.max(0, Math.min(100, Math.round((net / g.target) * 100)));
+    return acc + pct;
+  }, 0);
+
+  return Math.round(totalPct / goals.length);
+}
+

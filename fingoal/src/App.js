@@ -95,6 +95,7 @@ import IncomeOutcome from "./pages/IncomeOutcome";
 import Spending from "./pages/Spending";
 import Savings from "./pages/Savings";
 import Challenge from "./pages/Challenge";
+import "./App.css"
 
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -102,14 +103,16 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 function Nav() {
   const { user, signOut } = useAuth();
   return (
-    <nav style={{ padding: "10px", background: "#f0f0f0" }}>
-      <Link to="/" style={{ marginRight: "15px" }}>Home</Link>
-      <Link to="/income-outcome" style={{ marginRight: "15px" }}>Income/Outcome</Link>
-      <Link to="/savings" style={{ marginRight: "15px" }}>Savings</Link>
-      <Link to="/spending" style={{ marginRight: "15px" }}>Spending</Link>
-      <Link to="/challenge" style={{ marginRight: "15px" }}>Challenge</Link>
+    <nav className="navbar">
+      <div className="nav-links">
+        <Link to="/" className="nav-link">Home</Link>
+        <Link to="/income-outcome" className="nav-link">Income/Outcome</Link>
+        <Link to="/savings" className="nav-link">Savings</Link>
+        <Link to="/spending" className="nav-link">Spending</Link>
+        <Link to="/challenge" className="nav-link">Challenge</Link>
+      </div>
       {user && (
-        <button onClick={signOut} style={{ marginLeft: "15px" }}>
+        <button className="nav-button" onClick={signOut}>
           Sign out ({user.username})
         </button>
       )}
