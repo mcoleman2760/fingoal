@@ -4,3 +4,4 @@ import TransactionPage from "../TransactionPage"; // reuse your existing compone
 export default function Spending() {
   return <TransactionPage />;
 }
+

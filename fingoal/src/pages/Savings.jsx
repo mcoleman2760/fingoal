@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { months, getNetForMonth } from "../data/financeData";
+// import { months, getNetForMonth } from "../data/financeData";
+import { getMonths as months, getNetForMonth } from "../data/txStore";
 
 const fmt = (n) => n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
@@ -7,7 +8,8 @@ export default function Savings() {
   // form state
   const [name, setName] = useState("");                 // e.g., "Paris trip"
   const [target, setTarget] = useState("");             // e.g., 3000
-  const [goalMonth, setGoalMonth] = useState(months[0] || "September"); // which month to measure net
+  // const [goalMonth, setGoalMonth] = useState(months[0] || "September"); // which month to measure net
+  const [goalMonth, setGoalMonth] = useState((months()[0]) || "September");
   const [eventWhen, setEventWhen] = useState("December"); // e.g., "December" for encouragement text
 
   // goals stored in localStorage so they survive refresh (no backend needed yet)
@@ -104,7 +106,8 @@ export default function Savings() {
             onChange={(e) => setTarget(e.target.value)}
           />
           <select style={select} value={goalMonth} onChange={(e) => setGoalMonth(e.target.value)}>
-            {months.map((m) => (
+            {months().map((m) => (
+            // {months().map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
