@@ -47,26 +47,53 @@ export default function Savings() {
     setGoals((g) => g.filter((x) => x.id !== id));
   }
 
-  // compute progress for each goal from Income-Outcome net
   const enriched = useMemo(() => {
+    let remainingNet = getNetForMonth(goalMonth);
+
     return goals.map((g) => {
-      const net = getNetForMonth(g.month);          // income - outcome for that month
-      const saved = Math.max(0, net);               // if net negative, saved = 0 (you can change rule)
-      const remaining = Math.max(0, g.target - saved);
-      const pct = Math.max(0, Math.min(100, Math.round((saved / g.target) * 100)));
+      const net = Math.max(0, remainingNet);
+
+      const available = Math.max(0, remainingNet);
+      const allocation = Math.min(available, g.target);
+      remainingNet -= allocation;
+
+      const remaining = Math.max(0, g.target - allocation);
+      const pct = Math.round((allocation / g.target) * 100);
+
       let msg = "";
       if (remaining === 0) {
         msg = `Goal reached! Enjoy ${g.name}. 🎉`;
       } else if (pct >= 66) {
-        msg = `${fmt(remaining)} more to go — ${g.name} is close!`;
+        msg = `${fmt(remaining)} more to go - ${g.name} is close!`;
       } else if (pct >= 33) {
-        msg = `${fmt(remaining)} more to go — keep it up for ${g.name}!`;
+        msg = `${fmt(remaining)} more to go - keep it up for ${g.name}!`;
       } else {
         msg = `${fmt(remaining)} more to go to ${g.name} in ${g.eventWhen}. You got this! 💪`;
       }
-      return { ...g, net, saved, remaining, pct, msg };
+      return { ...g, net, saved: allocation, remaining, pct, msg };
     });
-  }, [goals]);
+  }, [goals, goalMonth]);
+
+  // compute progress for each goal from Income-Outcome net
+  // const enriched = useMemo(() => {
+  //   return goals.map((g) => {
+  //     const net = getNetForMonth(g.month);          // income - outcome for that month
+  //     const saved = Math.max(0, net);               // if net negative, saved = 0 (you can change rule)
+  //     const remaining = Math.max(0, g.target - saved);
+  //     const pct = Math.max(0, Math.min(100, Math.round((saved / g.target) * 100)));
+  //     let msg = "";
+  //     if (remaining === 0) {
+  //       msg = `Goal reached! Enjoy ${g.name}. 🎉`;
+  //     } else if (pct >= 66) {
+  //       msg = `${fmt(remaining)} more to go — ${g.name} is close!`;
+  //     } else if (pct >= 33) {
+  //       msg = `${fmt(remaining)} more to go — keep it up for ${g.name}!`;
+  //     } else {
+  //       msg = `${fmt(remaining)} more to go to ${g.name} in ${g.eventWhen}. You got this! 💪`;
+  //     }
+  //     return { ...g, net, saved, remaining, pct, msg };
+  //   });
+  // }, [goals]);
 
   // styles
   const page = { padding: 20, maxWidth: 900, margin: "0 auto" };

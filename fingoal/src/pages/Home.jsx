@@ -232,5 +232,6 @@ export default function Home() {
         <p>[Sign-up form goes here]</p>
       )}
     </div>
+    
   );
 }
