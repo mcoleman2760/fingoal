@@ -46,6 +46,15 @@ function load() {
   } catch {
     return { transactions: [] };
   }
+// at top of file
+const STORAGE_KEY = "txStore_v1";
+
+function save(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  // Let the app know the store changed (new months may exist)
+  window.dispatchEvent(new Event("txstore:changed"));
+}
+
 }
 function save(data) {
   localStorage.setItem(LS_KEY, JSON.stringify(data));
