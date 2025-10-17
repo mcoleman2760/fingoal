@@ -3,7 +3,7 @@
 ## Quick Start
 ```bash
 npm install
-cp .env.example .env   # edit MONGO_URI and JWT_SECRET
+cp .env.example .env  
 npm run dev
 ```
 
