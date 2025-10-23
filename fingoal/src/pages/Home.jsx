@@ -125,7 +125,7 @@
 // src/pages/Home.jsx
 import React, { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
-import { importCSVFile } from "../data/txStore";
+import { clearTransaction, importCSVFile, uploadStatement } from "../data/txStore";
 
 export default function Home() {
   // AuthContext exposes: user (string name), login(email,pw), register(info), logout()
@@ -171,19 +171,24 @@ export default function Home() {
   }
 
   async function uploadStatements() {
-    if (!files.length) return setUploadStatus("Choose at least one CSV file.");
+    if (!files.length) return setUploadStatus("Choose at least one file.");
     let imported = 0, skipped = 0;
     for (const f of files) {
-      if (!/\.csv$/i.test(f.name)) { skipped++; continue; }
+      if (!/\.csv$/i.test(f.name) && !/\.pdf$/i.test(f.name)) { skipped++; continue; }
       try {
-        const count = await importCSVFile(f);
-        imported += count;
+        if (/\.csv$/i.test(f.name)) {
+          const count = await importCSVFile(f);
+          imported += count || 0;
+        } else {
+          await uploadStatements(f);
+          imported++;
+        }
       } catch (err) {
         console.error("Import error:", f.name, err);
         skipped++;
       }
     }
-    setUploadStatus(`Imported ${imported} transactions.${skipped ? ` Skipped ${skipped} non-CSV file(s).` : ""}`);
+    setUploadStatus(`Imported ${imported} transactions.${skipped ? ` Skipped ${skipped} unsupported file(s).` : ""}`);
     setFiles([]);
   }
 
@@ -196,8 +201,8 @@ export default function Home() {
 
         <div style={{ border: "1px solid #ccc", padding: 16, borderRadius: 8 }}>
           <h2>Upload Statements</h2>
-          <p>Upload CSV exports from your bank. (PDF/XLSX will use the backend uploader.)</p>
-          <input type="file" multiple onChange={onFileChange} accept=".csv" />
+          <p>Upload CSV or PDF exports from your bank.</p>
+          <input type="file" multiple onChange={onFileChange} accept=".csv,.pdf" />
           <div style={{ marginTop: 10 }}>
             <button onClick={uploadStatements} style={{ marginRight: 10 }}>Upload</button>
             <button onClick={() => { setFiles([]); setUploadStatus(null); }}>Clear</button>
