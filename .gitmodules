@@ -1,0 +1,3 @@
+[submodule "fingoal-backend"]
+	path = fingoal-backend
+	url = git@github.com:OWNER/fingoal-backend.git
