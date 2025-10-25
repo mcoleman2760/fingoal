@@ -1,14 +1,21 @@
+// fingoal-backend/middleware/auth.js
 import jwt from "jsonwebtoken";
 
-export function requireAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-  if (!token) return res.status(401).json({ error: "Missing token" });
+export default function auth(req, res, next) {
+  const hdr = req.headers.authorization || "";
+  const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ msg: "No token, authorization denied" });
+  }
+
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = payload; // { id, username }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // depending on how you sign the token, adapt this:
+    // e.g. jwt.sign({ user: { id: user._id } }, secret)
+    req.user = decoded.user || decoded; 
     next();
-  } catch (e) {
-    res.status(401).json({ error: "Invalid token" });
+  } catch {
+    return res.status(401).json({ msg: "Token is not valid" });
   }
 }

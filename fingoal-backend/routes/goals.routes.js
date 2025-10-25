@@ -1,7 +1,11 @@
-// For this week's task, serve mock goals without auth.
-// Swap to DB + auth later by adding requireAuth and Goal model ops.
+// fingoal-backend/routes/goals.routes.js
 import { Router } from "express";
-import { listMock } from "../controllers/goalController.js";
-const r = Router();
-r.get("/", listMock);
-export default r;
+import auth from "../middleware/auth.js";
+import { list, create } from "../controllers/goalController.js";
+
+const router = Router();
+
+router.get("/", auth, list);
+router.post("/", auth, create);
+
+export default router;
