@@ -1,11 +1,9 @@
-
 import Papa from "papaparse";
 import api from "../api/client";
 import { clearAllTransactions as apiClear } from "../api/client";
 
 // ---------------- In-memory store ----------------
-// We keep both signed and absolute amounts to make summaries easy.
-let _cache = [];   // normalized rows
+let _cache = [];   
 let _primed = false;
 
 const hasToken = () => !!localStorage.getItem("finGoal_token");
@@ -45,13 +43,13 @@ const normalize = (r) => {
     date: iso,                                      // ISO yyyy-mm-dd
     merchant: r.description || r.memo || r.name || r.details || "",
     category: r.category || "Uncategorized",
-    amount: abs,                                     // magnitude for charts
-    rawAmount: signed,                               // signed for net math
+    amount: abs,                                     
+    rawAmount: signed,                               
     type: signed < 0 ? "outcome" : "income",
   };
 };
 
-// ---------------- Load from backend ----------------
+// Load from backend 
 export async function primeTxStore(force = false) {
   if (!hasToken()) { _cache = []; _primed = true; return _cache; }
 
@@ -71,7 +69,7 @@ export async function primeTxStore(force = false) {
   return _cache;
 }
 
-// ---------------- Public: CSV import ----------------
+//  Public: CSV import 
 // Parses a wide range of bank CSVs, normalizes rows, POSTs to backend, and refreshes.
 export async function importCSVFile(file) {
   const text = await file.text();
@@ -79,7 +77,6 @@ export async function importCSVFile(file) {
   const parse = Papa.parse(text, {
     header: true,
     skipEmptyLines: true,
-    // Don't rely on dynamicTyping for amounts; we sanitize manually.
     dynamicTyping: false,
   });
 
@@ -191,7 +188,7 @@ export async function importCSVFile(file) {
 }
 
 
-// ---------------- Upload (PDF or other) via backend route ----------------
+// Upload (PDF or other) via backend route 
 export async function uploadFromFile(file) {
   const form = new FormData();
   form.append("file", file);
@@ -201,7 +198,7 @@ export async function uploadFromFile(file) {
   await primeTxStore(true);
 }
 
-// ---------------- Sync getters used by pages ----------------
+// Sync getters used by pages 
 export function getMonths() {
   const keys = Array.from(new Set(_cache.map((t) => monthKeyOf(t.date))));
   // sort desc by real date
@@ -244,10 +241,40 @@ export function getNetForMonth(mk) {
 
 export async function resetAllTransactions() {
   await apiClear();
-  // Clear local cache and mark as primed to prevent old UI artifacts
-  // (this module’s version — adjust if you kept the older cache names)
   if (typeof _cache !== "undefined") {
     _cache = [];
     _primed = true;
+  }
+}
+
+export async function uploadPDF(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("http://localhost:5001/api/transactions/upload-pdf", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("finGoal_token")}`,
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Use backend message if available
+      const msg = data?.error || "PDF upload failed";
+      throw new Error(msg);
+    }
+
+    // Refresh local cache
+    await primeTxStore(true);
+
+    // Return info about imported transactions
+    return data.imported || 0;
+  } catch (err) {
+    console.error("PDF upload error:", err.message);
+    throw new Error(err.message || "Unknown error during PDF upload");
   }
 }

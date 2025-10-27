@@ -96,90 +96,73 @@ export default function Savings() {
   // }, [goals]);
 
   // styles
-  const page = { padding: 20, maxWidth: 900, margin: "0 auto" };
-  const h1 = { fontSize: 28, fontWeight: 800, margin: 0 };
-  const sub = { color: "#6b7280", marginTop: 6, marginBottom: 16 };
-  const section = { background: "white", border: "1px solid #f3f4f6", borderRadius: 16, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,.06)" };
-  const row = { display: "grid", gridTemplateColumns: "1fr 180px 180px 160px auto", gap: 10 };
-  const input = { padding: "10px 12px", borderRadius: 10, border: "1px solid #e5e7eb", outline: "none" };
-  const select = { ...input, paddingRight: 28 };
+  const pageStyle = { background: "#f9fafb", minHeight: "100vh", padding: "36px 20px" };
+  const containerStyle = { maxWidth: 900, margin: "0 auto" };
+  const cardStyle = { background: "white", borderRadius: 16, padding: 18, boxShadow: "0 2px 8px rgba(0,0,0,0.06)", border: "1px solid #eef2ff" };
+  const input = { padding: "10px 12px", borderRadius: 10, border: "1px solid #e5e7eb", outline: "none", width: "100%" };
+  const selectStyle = { ...input, paddingRight: 28 };
   const btn = { padding: "10px 14px", border: "none", borderRadius: 10, background: "#2563eb", color: "#fff", fontWeight: 700, cursor: "pointer" };
+  const deleteBtn = { ...btn, background: "#ef4444" };
   const small = { color: "#6b7280", fontSize: 13 };
-  const goalCard = { ...section, marginTop: 12 };
-  const barWrap = { height: 10, borderRadius: 999, background: "#f3f4f6", overflow: "hidden", marginTop: 8 };
-  const bar = (pct) => ({ width: `${pct}%`, height: "100%", background: "#10b981" });
 
   return (
-    <div style={page}>
-      <h1 style={h1}>Savings Goals</h1>
-      <p style={sub}>Track goals like “Paris trip” and see progress based on your monthly net (Income − Outcome).</p>
+    <div style={pageStyle}>
+      <div style={containerStyle}>
+        <div style={{ marginBottom: 12 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, color: "#2563eb" }}>Savings Goals</h1>
+          <p style={{ color: "#6b7280", marginTop: 6 }}>
+            Track goals like “Paris trip” and see progress based on your monthly net (Income − Outcome).
+          </p>
+        </div>
 
-      {/* Add goal */}
-      <div style={section}>
-        <h3 style={{ marginTop: 0 }}>Create a Goal</h3>
-        <form onSubmit={addGoal} style={{ ...row, alignItems: "center" }}>
-          <input
-            style={input}
-            placeholder="Goal name (e.g., Paris trip)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            style={input}
-            type="number"
-            min="1"
-            placeholder="Target amount (e.g., 3000)"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-          />
-          <select style={select} value={goalMonth} onChange={(e) => setGoalMonth(e.target.value)}>
-            {months().map((m) => (
-            // {months().map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-          <input
-            style={input}
-            placeholder="When (e.g., December)"
-            value={eventWhen}
-            onChange={(e) => setEventWhen(e.target.value)}
-          />
-          <button style={btn} type="submit">Add Goal</button>
-        </form>
-        <p style={{ ...small, marginTop: 8 }}>
-          We calculate progress using net for the selected month. Example: Goal $3000 for <b>October</b> and net is <b>$1000</b> → <b>$2000</b> to go.
-        </p>
-      </div>
+        <div style={cardStyle}>
+          <h3 style={{ marginTop: 0 }}>Create a Goal</h3>
+          <form onSubmit={addGoal} style={{ display: "grid", gridTemplateColumns: "1fr 180px 180px 160px auto", gap: 10, alignItems: "center" }}>
+            <input style={input} placeholder="Goal name (e.g., Paris trip)" value={name} onChange={(e) => setName(e.target.value)} />
+            <input style={input} type="number" min="1" placeholder="Target amount (e.g., 3000)" value={target} onChange={(e) => setTarget(e.target.value)} />
+            <select style={selectStyle} value={goalMonth} onChange={(e) => setGoalMonth(e.target.value)}>
+              {months().map((m) => (<option key={m} value={m}>{m}</option>))}
+            </select>
+            <input style={input} placeholder="When (e.g., December)" value={eventWhen} onChange={(e) => setEventWhen(e.target.value)} />
+            <button style={btn} type="submit">Add Goal</button>
+          </form>
 
-      {/* Goals list */}
-      {enriched.length === 0 ? (
-        <p style={{ ...small, marginTop: 12 }}>No goals yet. Add one above!</p>
-      ) : (
-        enriched.map((g) => (
-          <div key={g.id} style={goalCard}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>{g.name}</div>
-                <div style={small}>
-                  Month: <b>{g.month}</b> • Target: <b>{fmt(g.target)}</b> • Net so far: <b>{fmt(g.net)}</b>
+          <p style={{ ...small, marginTop: 8 }}>
+            We calculate progress using net for the selected month.
+          </p>
+        </div>
+
+        <div style={{ marginTop: 14 }}>
+          {enriched.length === 0 ? (
+            <div style={cardStyle}><p style={{ ...small }}>No goals yet. Add one above!</p></div>
+          ) : (
+            enriched.map((g) => (
+              <div key={g.id} style={{ ...cardStyle, marginBottom: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 800 }}>{g.name}</div>
+                    <div style={small}>
+                      Month: <b>{g.month}</b> • Target: <b>{fmt(g.target)}</b> • Net so far: <b>{fmt(g.net)}</b>
+                    </div>
+                  </div>
+                  <button onClick={() => removeGoal(g.id)} style={deleteBtn}>Delete</button>
                 </div>
+
+                <div style={{ height: 10, borderRadius: 999, background: "#f3f4f6", overflow: "hidden", marginTop: 10 }}>
+                  <div style={{ width: `${g.pct}%`, height: "100%", background: "#10b981", transition: "width .3s" }} />
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, ...small }}>
+                  <div>Saved (from net): <b>{fmt(g.saved)}</b></div>
+                  <div>Remaining: <b>{fmt(g.remaining)}</b> ({g.pct}%)</div>
+                </div>
+
+                <div style={{ marginTop: 8, fontWeight: 600 }}>{g.msg}</div>
               </div>
-              <button onClick={() => removeGoal(g.id)} style={{ ...btn, background: "#ef4444" }}>Delete</button>
-            </div>
-
-            <div style={barWrap}><div style={bar(g.pct)} /></div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-              <div style={small}>Saved (from net): <b>{fmt(g.saved)}</b></div>
-              <div style={small}>Remaining: <b>{fmt(g.remaining)}</b> ({g.pct}%)</div>
-            </div>
-
-            <div style={{ marginTop: 8, fontWeight: 600 }}>
-              {g.msg}
-            </div>
-          </div>
-        ))
-      )}
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }
