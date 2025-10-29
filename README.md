@@ -1,6 +1,16 @@
 **FinGoal**
 FinGoal is a financial goal tracking and savings motivation app.
 
+
+
+## Quick Start
+```bash
+Make sure you are in the root file
+npm i
+npm start
+
+```
+
 **Features**
 * Track income, spending, and savings
 * Set and monitor savings goals

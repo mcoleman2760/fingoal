@@ -1,0 +1,15 @@
+{
+
+
+  "name": "fingoal-root",
+  "private": true,
+  "scripts": {
+    "start": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run server\" \"npm run client\"",
+    "server": "cd fingoal-backend && npm run dev",
+    "client": "cd fingoal && npm start"
+  },
+
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
