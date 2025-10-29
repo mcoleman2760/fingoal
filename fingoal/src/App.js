@@ -150,7 +150,7 @@ import logo from "./fingoalLogo.png";
 
 // --- Top Nav ---
 function Nav() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, logout } = useAuth();
   return (
     <nav className="navbar">
       <div className="nav-links">
@@ -166,10 +166,10 @@ function Nav() {
       </div>
       <div>
         {!user ? (
-          <Link to="/login" className="nav-link">Log in</Link>
+          <Link to="/login" className="nav-link">Sign in</Link>
         ) : (
-          <button className="nav-button" onClick={signOut}>
-            Sign out ({user.username})
+          <button className="nav-button" onClick={logout}>
+            Sign out ({user})
           </button>
         )}
       </div>

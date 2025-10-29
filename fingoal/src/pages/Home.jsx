@@ -1,15 +1,21 @@
-
 // src/pages/Home.jsx
 import React, { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { importCSVFile } from "../data/txStore";
 import { uploadPDF } from "../data/txStore";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  Outlet,
+  useNavigate,
+} from "react-router-dom";
 // For API upload, import from api/client (txStore doesn't export uploadStatement)
 import { uploadStatement as uploadStatementToAPI } from "../api/client";
 // import { importCSVFile, uploadFromFile as uploadStatementToAPI } from "../data/txStore";
 import { registerUser } from "../api/client"; // reuse the backward-compatible export
 import { resetAllTransactions } from "../data/txStore";
-
 
 export default function Home() {
   // AuthContext exposes: user (string name), login(email,pw), logout()
@@ -18,10 +24,11 @@ export default function Home() {
   // auth UI state
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState(""); 
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
+  const navigate = useNavigate();
 
   // upload UI state
   const [files, setFiles] = useState([]);
@@ -34,9 +41,8 @@ export default function Home() {
 
     try {
       if (mode === "signin") {
-        if (!email || !password) return setErr("Please enter email and password.");
-        await login(email, password);
-        setOk("Signed in!");
+        navigate("/Login");
+        // push router
       } else {
         if (!email || !password || !username) {
           return setErr("Please enter username, email, and password.");
@@ -66,16 +72,17 @@ export default function Home() {
 
   async function uploadStatements() {
     if (!files.length) return setUploadStatus("Choose at least one file.");
-    let imported = 0, skipped = 0;
+    let imported = 0,
+      skipped = 0;
     const unsupportedFiles = [];
-  
+
     for (const f of files) {
       if (!/\.csv$/i.test(f.name) && !/\.pdf$/i.test(f.name)) {
         skipped++;
         unsupportedFiles.push(f.name);
         continue;
       }
-  
+
       try {
         if (/\.csv$/i.test(f.name)) {
           imported += await importCSVFile(f);
@@ -90,56 +97,60 @@ export default function Home() {
         unsupportedFiles.push(f.name);
       }
     }
-  
-    setUploadStatus(
-      `Imported ${imported} transaction${imported !== 1 ? "s" : ""}.${skipped ? ` Skipped ${skipped} unsupported file(s): ${unsupportedFiles.join(", ")}` : ""}`
-    );
-  
-    setFiles([]);
-  }  
 
-// ---------- signed-in view ----------
-if (user) {
-  async function handleReset() {
-    if (!window.confirm("Are you sure you want to delete ALL transactions and reset to 0?")) return;
-    try {
-      const res = await fetch("http://localhost:5001/api/transactions", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("finGoal_token")}`,
-        },
-      });
-      if (!res.ok) throw new Error("Failed to reset transactions");
-      const data = await res.json();
-      alert(`✅ Reset complete — ${data.deleted || 0} transactions deleted.`);
-      window.location.reload(); // refreshes UI (Income/Outcome back to 0)
-    } catch (e) {
-      console.error("Reset error:", e);
-      alert("❌ Failed to reset transactions.");
-    }
+    setUploadStatus(
+      `Imported ${imported} transaction${imported !== 1 ? "s" : ""}.${
+        skipped
+          ? ` Skipped ${skipped} unsupported file(s): ${unsupportedFiles.join(
+              ", "
+            )}`
+          : ""
+      }`
+    );
+
+    setFiles([]);
   }
 
-  return (
-    <div style={{ background: "#f9fafb", minHeight: "100vh", padding: "40px 20px" }}>
+  // ---------- signed-in view ----------
+  if (user) {
+    async function handleReset() {
+      if (
+        !window.confirm(
+          "Are you sure you want to delete ALL transactions and reset to 0?"
+        )
+      )
+        return;
+      try {
+        const res = await fetch("http://localhost:5001/api/transactions", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("finGoal_token")}`,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to reset transactions");
+        const data = await res.json();
+        alert(`✅ Reset complete — ${data.deleted || 0} transactions deleted.`);
+        window.location.reload(); // refreshes UI (Income/Outcome back to 0)
+      } catch (e) {
+        console.error("Reset error:", e);
+        alert("❌ Failed to reset transactions.");
+      }
+    }
+
+    return (
+      <div
+        style={{
+          background: "#f9fafb",
+          minHeight: "100vh",
+          padding: "40px 20px",
+        }}
+      >
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 30 }}>
             <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>
               Welcome back, {user} 👋
             </h1>
-            <button
-              onClick={logout}
-              style={{
-                background: "#2563eb",
-                color: "white",
-                border: "none",
-                padding: "8px 14px",
-                borderRadius: 8,
-                cursor: "pointer",
-              }}
-            >
-              Sign Out
-            </button>
           </div>
 
           <div
@@ -155,9 +166,21 @@ if (user) {
               Upload CSV or PDF exports from your bank.
             </p>
 
-            <input type="file" multiple onChange={onFileChange} accept=".csv,.pdf" />
+            <input
+              type="file"
+              multiple
+              onChange={onFileChange}
+              accept=".csv,.pdf"
+            />
 
-            <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div
+              style={{
+                marginTop: 16,
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+              }}
+            >
               <button
                 onClick={uploadStatements}
                 style={{
@@ -316,7 +339,7 @@ if (user) {
               cursor: "pointer",
             }}
           >
-            {mode === "signup" ? "Create Account" : "Sign In"}
+            {mode === "signup" ? "Create Account" : "Sign In Here"}
           </button>
           {err && <div style={{ color: "#dc2626", fontSize: 14 }}>{err}</div>}
           {ok && <div style={{ color: "#10b981", fontSize: 14 }}>{ok}</div>}

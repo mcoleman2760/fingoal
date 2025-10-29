@@ -19,6 +19,10 @@ export function AuthProvider({ children }) {
     return login(em, password);
   }
 
+  
+
+
+
   async function register(info) {
     await registerUser(info);
   }
