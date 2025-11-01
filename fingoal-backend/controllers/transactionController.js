@@ -1,37 +1,62 @@
-// import Transaction from "../models/Transaction.js";
-
-// export async function list(req, res) {
-//   const items = await Transaction.find({ userId: req.user.id }).sort({ date: -1 });
-//   res.json(items);
-// }
-
-// export async function create(req, res) {
-//   const { merchant, category, amount, date, type } = req.body;
-//   if (amount == null) return res.status(400).json({ error: "amount required" });
-//   const tx = await Transaction.create({ userId: req.user.id, merchant, category, amount, date, type });
-//   res.status(201).json(tx);
-// }
-
 // fingoal-backend/controllers/transactionController.js
 import Transaction from "../models/Transaction.js";
 
 /**
+ * Utility: coerce and normalize a transaction payload before insert.
+ * - Infers type from amount sign if not provided
+ * - Ensures description exists (fallbacks to merchant/name/memo)
+ * - Parses date safely
+ */
+function normalizeIncomingTx(raw, userId) {
+  const amountNum = Number(raw.amount);
+  const hasAmount = Number.isFinite(amountNum);
+
+  const desc =
+    raw.description ??
+    raw.merchant ??
+    raw.name ??
+    raw.memo ??
+    "";
+
+  // prefer explicit type; otherwise infer from sign
+  const t =
+    raw.type && (raw.type === "income" || raw.type === "expense")
+      ? raw.type
+      : hasAmount && amountNum < 0
+      ? "expense"
+      : "income";
+
+  // if caller passes positive expense or negative income, keep the amount as-is
+  // (your UI/summary logic already handles sign + type)
+  // Required fields are validated by the Mongoose schema.
+
+  return {
+    user: userId,
+    amount: hasAmount ? amountNum : 0,
+    type: t,
+    category: raw.category || "Uncategorized",
+    description: String(desc),
+    date: raw.date ? new Date(raw.date) : new Date(),
+  };
+}
+
+/**
  * GET /api/transactions
- * List transactions for the logged-in user.
+ * List transactions for the logged-in user (newest first).
  */
 export async function list(req, res) {
   try {
     const userId = req.user?.id || req.user?._id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const items = await Transaction.find({ userId }).sort({ date: -1 });
+    const items = await Transaction.find({ user: userId }).sort({ date: -1 });
 
-    // Ensure frontend gets a `description` field (maps from merchant)
+    // Ensure frontend always gets a `description` field
     const payload = items.map((doc) => {
-      const obj = doc.toObject();
+      const obj = doc.toObject({ getters: true });
       return {
         ...obj,
-        description: obj.description || obj.merchant || "", // keep both if your schema has description
+        description: obj.description || obj.merchant || "",
       };
     });
 
@@ -44,68 +69,41 @@ export async function list(req, res) {
 
 /**
  * POST /api/transactions
- * Create a new transaction for the logged-in user.
- * Accepts either:
- *   - { description, category, amount, date, type }
- *   - { merchant, category, amount, date, type }
+ * Create a single transaction for the logged-in user.
+ * Body: { amount, type?, category?, description?, date? }
  */
 export async function create(req, res) {
   try {
     const userId = req.user?.id || req.user?._id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    // front-end sends { date, description, amount, type?, category? }
-    const {
-      merchant,
-      description,
-      category = "Uncategorized",
-      amount,
-      date,
-      type,
-    } = req.body;
-
-    if (amount == null || isNaN(Number(amount))) {
-      return res.status(400).json({ error: "amount required" });
-    }
-
-    const merchantOrDesc = merchant ?? description ?? "";
-    const signedAmount = Number(amount);
-    const inferredType = type || (signedAmount < 0 ? "outcome" : "income");
-
-    const tx = await Transaction.create({
-      userId,
-      merchant: merchantOrDesc,    // stored as `merchant` in DB
-      category,
-      amount: signedAmount,        // signed number (neg = spending)
-      date,                        // let your schema handle Date casting
-      type: inferredType,          // optional if your schema stores it
-    });
-
-    // Ensure the client gets a `description` field
-    const obj = tx.toObject();
-    return res.status(201).json({
-      ...obj,
-      description: obj.description || obj.merchant || "",
-    });
+    const normalized = normalizeIncomingTx(req.body || {}, userId);
+    const tx = await Transaction.create(normalized);
+    res.status(201).json(tx);
   } catch (err) {
     console.error("transactions.create error:", err);
+    // surface validation errors clearly
+    if (err?.name === "ValidationError") {
+      return res.status(400).json({ message: err.message });
+    }
     res.status(500).json({ message: "Failed to create transaction" });
   }
 }
 
 /**
  * DELETE /api/transactions
- * Delete ALL transactions for the logged-in user (reset to zero).
+ * Remove ALL transactions for the logged-in user (dangerous).
+ * Returns: { deleted: <number> }
  */
 export async function clearAllTransactions(req, res) {
   try {
     const userId = req.user?.id || req.user?._id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const result = await Transaction.deleteMany({ userId });
-    res.json({ deleted: result.deletedCount || 0 });
+    const result = await Transaction.deleteMany({ user: userId });
+    res.json({ deleted: result?.deletedCount ?? 0 });
   } catch (err) {
-    console.error("transactions.clearAll error:", err);
+    console.error("transactions.clearAllTransactions error:", err);
     res.status(500).json({ message: "Failed to clear transactions" });
   }
 }

@@ -1,74 +1,3 @@
-// // src/api/client.js
-// import axios from "axios";
-
-// const api = axios.create({
-//   baseURL: process.env.REACT_APP_API_URL || "http://localhost:5001/api",
-//   withCredentials: true,
-//   timeout: 10000,
-// });
-
-// // Attach JWT token if available
-// api.interceptors.request.use((config) => {
-//   const token = localStorage.getItem("finGoal_token");
-//   if (token) config.headers.Authorization = `Bearer ${token}`;
-//   return config;
-// });
-
-
-// // Handle 401 errors globally (unauthorized)
-// api.interceptors.response.use(
-//   (res) => res,
-//   (err) => {
-//     if (err?.response?.status === 401) {
-//       console.warn("🔒 Session expired. Logging out...");
-//       localStorage.removeItem("finGoal_token");
-//       localStorage.removeItem("finGoal_name");
-//       // Optional: redirect user to login
-//       window.location.href = "/login";
-//     }
-//     return Promise.reject(err);
-//   }
-// );
-
-// export default api;
-
-// // ---------- Auth ----------
-// export async function registerUser({ email, password, name }) {
-//   return api.post("/auth/register", { email, password, name });
-// }
-
-// export async function loginUser(email, password) {
-//   const { data } = await api.post("/auth/login", { email, password });
-//   localStorage.setItem("finGoal_token", data.token);
-//   localStorage.setItem("finGoal_name", data.name || "");
-//   return data;
-// }
-
-// export function logoutUser() {
-//   localStorage.removeItem("finGoal_token");
-//   localStorage.removeItem("finGoal_name");
-// }
-
-// // ---------- Transactions ----------
-// export async function getTransactions() {
-//   const { data } = await api.get("/transactions");
-//   return data;
-// }
-
-// export async function addTransaction(tx) {
-//   const { data } = await api.post("/transactions", tx);
-//   return data;
-// }
-
-// // ---------- Upload Statements ----------
-// export async function uploadStatement(file) {
-//   const form = new FormData();
-//   form.append("file", file);
-//   const { data } = await api.post("/statements/upload", form, {
-//     headers: { "Content-Type": "multipart/form-data" },
-//   });
-//   return data;
-// }
 
 // src/api/client.js
 import axios from "axios";
@@ -152,9 +81,48 @@ export async function uploadStatement(file) {
   return data;
 }
 
+// ---------- Friends ----------
+export async function fetchFriends() {
+  const { data } = await api.get("/friends");        // GET /api/friends
+  return data;                                       // { friends: [...] }
+}
+
+export async function fetchFriendsLeaderboard(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const { data } = await api.get(`/friends/leaderboard${qs ? `?${qs}` : ""}`);
+  return data; // { leaderboard: [...] }
+}
+
+export async function addFriend(friendUsername) {
+  const { data } = await api.post("/friends", {      // POST /api/friends
+    friendUsername,
+  });
+  return data;                                       // { friends: [...] }
+}
+
+export async function removeFriend(friendId) {
+  const { data } = await api.delete(`/friends/${friendId}`); // DELETE /api/friends/:friendId
+  return data;                                       // { friends: [...] }
+}
+
+
 export async function clearAllTransactions() {
   const { data } = await api.delete("/transactions");
   return data; // { deleted: N }
 }
+
+// client.js (add these)
+export async function fetchMySavingRate() {
+  const { data } = await api.get("/statements"); // uses your JWT via interceptor
+  return data?.savingRate ?? 0;
+}
+
+export async function fetchFriendSavingRate(userId) {
+  // If you implemented a /api/users/:id/summary endpoint, call it here.
+  // If not, keep using your server-side leaderboard or whatever you set up.
+  const { data } = await api.get(`/users/${userId}/summary`);
+  return data?.savingRate ?? 0;
+}
+
 
 export default api;
