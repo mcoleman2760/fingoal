@@ -1,109 +1,69 @@
-// fingoal-backend/controllers/transactionController.js
 import Transaction from "../models/Transaction.js";
 
-/**
- * Utility: coerce and normalize a transaction payload before insert.
- * - Infers type from amount sign if not provided
- * - Ensures description exists (fallbacks to merchant/name/memo)
- * - Parses date safely
- */
-function normalizeIncomingTx(raw, userId) {
-  const amountNum = Number(raw.amount);
-  const hasAmount = Number.isFinite(amountNum);
-
-  const desc =
-    raw.description ??
-    raw.merchant ??
-    raw.name ??
-    raw.memo ??
-    "";
-
-  // prefer explicit type; otherwise infer from sign
-  const t =
-    raw.type && (raw.type === "income" || raw.type === "expense")
-      ? raw.type
-      : hasAmount && amountNum < 0
-      ? "expense"
-      : "income";
-
-  // if caller passes positive expense or negative income, keep the amount as-is
-  // (your UI/summary logic already handles sign + type)
-  // Required fields are validated by the Mongoose schema.
-
+function normalize(raw, userId) {
+  const amount = Number(raw.amount);
+  const type = raw.type && ["income","expense"].includes(raw.type)
+    ? raw.type
+    : (Number.isFinite(amount) && amount < 0 ? "expense" : "income");
   return {
     user: userId,
-    amount: hasAmount ? amountNum : 0,
-    type: t,
+    amount: Number.isFinite(amount) ? amount : 0,
+    type,
     category: raw.category || "Uncategorized",
-    description: String(desc),
+    description: raw.description || raw.merchant || raw.name || raw.memo || "",
     date: raw.date ? new Date(raw.date) : new Date(),
   };
 }
 
-/**
- * GET /api/transactions
- * List transactions for the logged-in user (newest first).
- */
+// GET /api/transactions
 export async function list(req, res) {
-  try {
-    const userId = req.user?.id || req.user?._id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-    const items = await Transaction.find({ user: userId }).sort({ date: -1 });
-
-    // Ensure frontend always gets a `description` field
-    const payload = items.map((doc) => {
-      const obj = doc.toObject({ getters: true });
-      return {
-        ...obj,
-        description: obj.description || obj.merchant || "",
-      };
-    });
-
-    res.json(payload);
-  } catch (err) {
-    console.error("transactions.list error:", err);
-    res.status(500).json({ message: "Failed to fetch transactions" });
-  }
+  const items = await Transaction.find({ user: req.user.id }).sort({ date: -1 });
+  res.json(items);
 }
 
-/**
- * POST /api/transactions
- * Create a single transaction for the logged-in user.
- * Body: { amount, type?, category?, description?, date? }
- */
+// GET /api/transactions/:id
+export async function getOne(req, res) {
+  const t = await Transaction.findOne({ _id: req.params.id, user: req.user.id });
+  if (!t) return res.status(404).json({ message: "Not found" });
+  res.json(t);
+}
+
+// POST /api/transactions
 export async function create(req, res) {
   try {
-    const userId = req.user?.id || req.user?._id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-    const normalized = normalizeIncomingTx(req.body || {}, userId);
-    const tx = await Transaction.create(normalized);
+    const tx = await Transaction.create(normalize(req.body || {}, req.user.id));
     res.status(201).json(tx);
-  } catch (err) {
-    console.error("transactions.create error:", err);
-    // surface validation errors clearly
-    if (err?.name === "ValidationError") {
-      return res.status(400).json({ message: err.message });
-    }
+  } catch (e) {
+    if (e?.name === "ValidationError") return res.status(400).json({ message: e.message });
     res.status(500).json({ message: "Failed to create transaction" });
   }
 }
 
-/**
- * DELETE /api/transactions
- * Remove ALL transactions for the logged-in user (dangerous).
- * Returns: { deleted: <number> }
- */
-export async function clearAllTransactions(req, res) {
-  try {
-    const userId = req.user?.id || req.user?._id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+// PATCH /api/transactions/:id
+export async function update(req, res) {
+  const allowed = ["amount","type","category","description","date"];
+  const patch = {};
+  for (const k of allowed) if (k in req.body) patch[k] = req.body[k];
+  if ("amount" in patch) patch.type = patch.amount < 0 ? "expense" : "income";
 
-    const result = await Transaction.deleteMany({ user: userId });
-    res.json({ deleted: result?.deletedCount ?? 0 });
-  } catch (err) {
-    console.error("transactions.clearAllTransactions error:", err);
-    res.status(500).json({ message: "Failed to clear transactions" });
-  }
+  const t = await Transaction.findOneAndUpdate(
+    { _id: req.params.id, user: req.user.id },
+    patch,
+    { new: true }
+  );
+  if (!t) return res.status(404).json({ message: "Not found" });
+  res.json(t);
+}
+
+// DELETE /api/transactions/:id
+export async function remove(req, res) {
+  const r = await Transaction.deleteOne({ _id: req.params.id, user: req.user.id });
+  if (!r.deletedCount) return res.status(404).json({ message: "Not found" });
+  res.status(204).end();
+}
+
+// DELETE /api/transactions (danger: clear all)
+export async function clearAll(req, res) {
+  const r = await Transaction.deleteMany({ user: req.user.id });
+  res.json({ deleted: r.deletedCount || 0 });
 }

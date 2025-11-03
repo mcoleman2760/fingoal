@@ -1,48 +1,10 @@
-// import mongoose from "mongoose";
-
-// const userSchema = new mongoose.Schema({
-//   email: { type: String, required: true, unique: true, index: true },
-//   username: { type: String, required: true, unique: true, index: true },
-//   passwordHash: { type: String, required: true }
-// }, { timestamps: true });
-
-// export default mongoose.model("User", userSchema);
-
-// models/User.js
-// import mongoose from "mongoose";
-// const { Schema, model, models } = mongoose;
-
-// const userSchema = new Schema(
-//   {
-//     email:    { type: String, required: true, unique: true, index: true },
-//     username: { type: String, required: true, unique: true, index: true },
-//     passwordHash: { type: String, required: true },
-
-//     // NEW: friends stored as ObjectId references
-//     friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
-//   },
-//   { timestamps: true }
-// );
-
-// // Avoid OverwriteModelError during dev/hot reload:
-// const User = models.User || model("User", userSchema);
-// export default User;
-// models/User.js
 import mongoose from "mongoose";
-const { Schema, model, models } = mongoose;
 
-const userSchema = new Schema(
-  {
-    email:    { type: String, required: true, unique: true, index: true },
-    username: { type: String, required: true, unique: true, index: true },
-    passwordHash: { type: String, required: true },
+const UserSchema = new mongoose.Schema({
+  username: { type: String, required: true, trim: true, minlength: 2, maxlength: 40, unique: true, index: true },
+  email:    { type: String, required: true, lowercase: true, trim: true, unique: true, index: true },
+  passwordHash: { type: String, required: true },
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+}, { timestamps: true });
 
-    // NEW: friends stored as ObjectId references
-    friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
-  },
-  { timestamps: true }
-);
-
-// Avoid OverwriteModelError during dev/hot reload:
-const User = models.User || model("User", userSchema);
-export default User;
+export default mongoose.model("User", UserSchema);

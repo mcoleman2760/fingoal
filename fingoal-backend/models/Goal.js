@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
 
-const goalSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-  title: { type: String, required: true },
-  targetAmount: { type: Number, required: true },
-  timeline: { type: String, enum: ["1m","3m","6m","12m","24m","36m","custom"], default: "6m" },
-  progress: { type: Number, default: 0 } // amount saved so far
+const GoalSchema = new mongoose.Schema({
+  user:  { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  title: { type: String, required: true, trim: true },
+  targetAmount: { type: Number, required: true, min: 1 },
+  timeline: { type: String, default: "" },     // e.g., "6m", "Dec 2025"
+  progress: { type: Number, default: 0, min: 0 }, // you can update via PATCH
 }, { timestamps: true });
 
-export default mongoose.model("Goal", goalSchema);
+GoalSchema.index({ user: 1, createdAt: -1 });
+export default mongoose.model("Goal", GoalSchema);
