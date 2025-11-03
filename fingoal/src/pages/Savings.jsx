@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 // import { months, getNetForMonth } from "../data/financeData";
 import { getMonths as months, getNetForMonth } from "../data/txStore";
 
-const fmt = (n) => n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const fmt = (n) => {
+  const num = Number(n);
+  if (isNaN(num)) return "$0";
+  return num.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+};
 
 export default function Savings() {
   // form state
@@ -21,6 +25,9 @@ export default function Savings() {
       return [];
     }
   });
+
+  const [editingGoalId, setEditingGoalId] = useState(null);
+  const [editAmount, setEditAmount] = useState("");
 
   useEffect(() => {
     localStorage.setItem("goals", JSON.stringify(goals));
@@ -51,11 +58,17 @@ export default function Savings() {
     let remainingNet = getNetForMonth(goalMonth);
 
     return goals.map((g) => {
-      const net = Math.max(0, remainingNet);
-
       const available = Math.max(0, remainingNet);
-      const allocation = Math.min(available, g.target);
-      remainingNet -= allocation;
+
+      // if user set a manual allocation, use that directly
+      const allocation = g.manualAllocation != null
+        ? Math.min(g.manualAllocation, g.target)
+        : Math.min(available, g.target);
+
+      // adjust remaining net *only if automatic allocation*
+      if (g.manualAllocation == null) {
+        remainingNet -= allocation;
+      }
 
       const remaining = Math.max(0, g.target - allocation);
       const pct = Math.round((allocation / g.target) * 100);
@@ -70,7 +83,8 @@ export default function Savings() {
       } else {
         msg = `${fmt(remaining)} more to go to ${g.name} in ${g.eventWhen}. You got this! 💪`;
       }
-      return { ...g, net, saved: allocation, remaining, pct, msg };
+
+      return { ...g, saved: allocation, remaining, pct, msg };
     });
   }, [goals, goalMonth]);
 
@@ -145,15 +159,71 @@ export default function Savings() {
                       Month: <b>{g.month}</b> • Target: <b>{fmt(g.target)}</b> • Net so far: <b>{fmt(g.net)}</b>
                     </div>
                   </div>
-                  <button onClick={() => removeGoal(g.id)} style={deleteBtn}>Delete</button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {editingGoalId === g.id ? (
+                      <>
+                        <input
+                          type="number"
+                          value={editAmount}
+                          onChange={(e) => setEditAmount(e.target.value)}
+                          placeholder="Enter amount"
+                          style={{ ...input, width: 100 }}
+                        />
+                        <button
+                          style={btn}
+                          onClick={() => {
+                            const amt = Number(editAmount);
+                            if (isNaN(amt) || amt < 0) return alert("Enter a valid amount");
+                            setGoals((gs) =>
+                              gs.map((goal) =>
+                                goal.id === g.id
+                                  ? { ...goal, manualAllocation: amt }
+                                  : goal
+                              )
+                            );
+                            setEditingGoalId(null);
+                            setEditAmount("");
+                          }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          style={{ ...btn, background: "#9ca3af" }}
+                          onClick={() => {
+                            setEditingGoalId(null);
+                            setEditAmount("");
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setEditingGoalId(g.id);
+                            setEditAmount(g.manualAllocation ?? g.saved ?? "");
+                          }}
+                          style={{ ...btn, background: "#f59e0b" }}
+                        >
+                          Edit
+                        </button>
+                        <button onClick={() => removeGoal(g.id)} style={deleteBtn}>
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-
                 <div style={{ height: 10, borderRadius: 999, background: "#f3f4f6", overflow: "hidden", marginTop: 10 }}>
                   <div style={{ width: `${g.pct}%`, height: "100%", background: "#10b981", transition: "width .3s" }} />
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, ...small }}>
-                  <div>Saved (from net): <b>{fmt(g.saved)}</b></div>
+                  <div>
+                    Saved ({g.manualAllocation != null ? "manual" : "auto"}):{" "}
+                    <b>{fmt(g.saved)}</b>
+                  </div>
                   <div>Remaining: <b>{fmt(g.remaining)}</b> ({g.pct}%)</div>
                 </div>
 
@@ -171,7 +241,7 @@ export default function Savings() {
 export function getUserProgress() {
   const goalsRaw = localStorage.getItem("goals");
   const goals = goalsRaw ? JSON.parse(goalsRaw) : [];
-  
+
   if (goals.length === 0) return 0;
 
   // calculate overall progress as average of all goal percentages
