@@ -209,6 +209,81 @@ export function getTransactionsByMonth(mk) {
   return _cache.filter((t) => monthKeyOf(t.date) === mk);
 }
 
+// --- DAILY OUTCOME SERIES (per selected month) ---
+export function getDailyOutcomeSeries(mk) {
+  const rows = getTransactionsByMonth(mk);
+
+  // Derive year/month from mk (e.g., "Oct 2025")
+  const d = new Date("1 " + mk);
+  const year = d.getFullYear();
+  const monthIndex = d.getMonth(); // 0..11
+  if (isNaN(year) || isNaN(monthIndex)) {
+    // fallback to now
+    const now = new Date();
+    return getDailyOutcomeSeries(monthKeyOf(now.toISOString().slice(0,10)));
+  }
+
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const totals = Array.from({ length: daysInMonth }, () => 0);
+
+  for (const r of rows) {
+    const dd = new Date(r.date);
+    if (dd.getFullYear() !== year || dd.getMonth() !== monthIndex) continue;
+
+    // Treat any expense as positive spend for charting
+    const isOutcome = r.type === "outcome" || (typeof r.rawAmount === "number" && r.rawAmount < 0);
+    if (!isOutcome) continue;
+
+    const day = dd.getDate(); // 1..daysInMonth
+    const val = typeof r.amount === "number" ? r.amount : Math.abs(Number(r.rawAmount) || 0);
+    totals[day - 1] += Math.max(0, val);
+  }
+
+  const max = totals.reduce((m, v) => (v > m ? v : m), 0);
+  return { days: daysInMonth, totals, max, year, monthIndex };
+}
+
+// --- DAILY INCOME & OUTCOME SERIES (per selected month) ---
+export function getDailySeries(mk) {
+  const rows = getTransactionsByMonth(mk);
+
+  // "Oct 2025" -> year/monthIndex
+  const d = new Date("1 " + mk);
+  const year = d.getFullYear();
+  const monthIndex = d.getMonth();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+  const incomeTotals  = Array.from({ length: daysInMonth }, () => 0);
+  const outcomeTotals = Array.from({ length: daysInMonth }, () => 0);
+
+  for (const r of rows) {
+    const dd = new Date(r.date);
+    if (dd.getFullYear() !== year || dd.getMonth() !== monthIndex) continue;
+    const day = dd.getDate() - 1;
+
+    if (r.type === "income" || (typeof r.rawAmount === "number" && r.rawAmount >= 0)) {
+      incomeTotals[day] += Math.max(0, Number(r.amount) || Math.abs(Number(r.rawAmount) || 0));
+    } else {
+      // spend shown as positive magnitude
+      outcomeTotals[day] += Math.max(0, Number(r.amount) || Math.abs(Number(r.rawAmount) || 0));
+    }
+  }
+
+  const maxIncome  = incomeTotals.reduce((m, v) => (v > m ? v : m), 0);
+  const maxOutcome = outcomeTotals.reduce((m, v) => (v > m ? v : m), 0);
+
+  return {
+    days: daysInMonth,
+    year,
+    monthIndex,
+    incomeTotals,
+    outcomeTotals,
+    maxIncome,
+    maxOutcome,
+  };
+}
+
+
 export function getSummaryByMonth(mk) {
   const rows = getTransactionsByMonth(mk);
   const income = rows.filter((r) => r.type === "income");
