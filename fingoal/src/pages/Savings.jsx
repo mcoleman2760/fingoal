@@ -202,20 +202,32 @@ const fmt = (n) => {
 
 // Shared allocator so UI math == exported getUserProgress math
 function computeDisplayGoals(goals, goalMonth) {
+  // start with the total positive net available for the month
   let remainingNet = Math.max(0, Number(getNetForMonth(goalMonth)) || 0);
 
+  // We'll allocate in one pass, consuming remainingNet for both manual and auto allocations.
+  // This ensures manual allocations subtract from the pool and cannot cause total > net.
   return goals.map((g) => {
     const target = Math.max(0, Number(g.target) || 0);
-    const available = Math.max(0, remainingNet);
 
-    // If user set a manual allocation, prefer it (capped by target).
-    const allocation =
-      g.manualAllocation != null
-        ? Math.min(Math.max(0, Number(g.manualAllocation) || 0), target)
-        : Math.min(available, target);
+    // read manualAllocation if present (could be 0)
+    const manualRaw = g.manualAllocation;
+    const hasManual = manualRaw != null;
 
-    // Only consume "remainingNet" for automatic allocations
-    if (g.manualAllocation == null) {
+    // clamp requested manual allocation to a non-negative number
+    const manualRequested = hasManual ? Math.max(0, Number(manualRaw) || 0) : 0;
+
+    let allocation = 0;
+
+    if (hasManual) {
+      // Manual allocation takes priority but cannot exceed the goal target,
+      // and cannot allocate more than remainingNet at this moment.
+      allocation = Math.min(target, manualRequested, remainingNet);
+      // subtract manual allocation from pool so later goals (manual or auto) see reduced remainingNet
+      remainingNet = Math.max(0, remainingNet - allocation);
+    } else {
+      // Automatic allocation: take what's left from remainingNet (capped by target)
+      allocation = Math.min(target, Math.max(0, remainingNet));
       remainingNet = Math.max(0, remainingNet - allocation);
     }
 
@@ -230,6 +242,7 @@ function computeDisplayGoals(goals, goalMonth) {
       msg = `${fmt(remaining)} more to go to ${g.name}${when}. You got this! 💪`;
     }
 
+    // saved = allocation (actual amount applied to this goal)
     return { ...g, saved: allocation, remaining, pct, msg };
   });
 }
