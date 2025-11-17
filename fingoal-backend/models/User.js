@@ -1,48 +1,30 @@
-// import mongoose from "mongoose";
-
-// const userSchema = new mongoose.Schema({
-//   email: { type: String, required: true, unique: true, index: true },
-//   username: { type: String, required: true, unique: true, index: true },
-//   passwordHash: { type: String, required: true }
-// }, { timestamps: true });
-
-// export default mongoose.model("User", userSchema);
-
-// models/User.js
-// import mongoose from "mongoose";
-// const { Schema, model, models } = mongoose;
-
-// const userSchema = new Schema(
-//   {
-//     email:    { type: String, required: true, unique: true, index: true },
-//     username: { type: String, required: true, unique: true, index: true },
-//     passwordHash: { type: String, required: true },
-
-//     // NEW: friends stored as ObjectId references
-//     friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
-//   },
-//   { timestamps: true }
-// );
-
-// // Avoid OverwriteModelError during dev/hot reload:
-// const User = models.User || model("User", userSchema);
-// export default User;
 // models/User.js
 import mongoose from "mongoose";
 const { Schema, model, models } = mongoose;
 
 const userSchema = new Schema(
   {
-    email:    { type: String, required: true, unique: true, index: true },
+    email: { type: String, required: true, unique: true, index: true },
     username: { type: String, required: true, unique: true, index: true },
     passwordHash: { type: String, required: true },
 
-    // NEW: friends stored as ObjectId references
+    // Friends: ObjectId references to other users
     friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
+
+    // XP & Level
+    xp: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
   },
   { timestamps: true }
 );
 
-// Avoid OverwriteModelError during dev/hot reload:
+// Instance method: calculate level based on XP
+userSchema.methods.calculateLevel = function () {
+  // Example: 100 XP = 1 level
+  return Math.floor(this.xp / 100) + 1;
+};
+
+// Avoid OverwriteModelError during dev/hot reload
 const User = models.User || model("User", userSchema);
+
 export default User;
