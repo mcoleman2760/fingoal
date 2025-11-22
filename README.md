@@ -3,12 +3,15 @@ FinGoal is a financial goal tracking and savings motivation app.
 
 
 
-## Quick Start
+## Install & Start
 ```bash
-Make sure you are in the root file
-npm i
-npm start
+**Install:**
+npm install recharts in fingoal folder
+npm install in fingoal-backend folder
+npm install in the root folder
 
+**Start**
+npm start in the root folder
 ```
 
 **Features**
