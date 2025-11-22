@@ -1,31 +1,58 @@
-
 // src/api/client.js
 import axios from "axios";
 
+// -----------------------------------------------------------------------------
+// API base URL
+// For now, hardcode it to make sure we're really talking to localhost:5001/api.
+// Later, you can switch back to using REACT_APP_API_URL if you want.
+// -----------------------------------------------------------------------------
+const API_BASE_URL = "http://localhost:5001/api";
+
+console.log("🔎 Using API base URL:", API_BASE_URL);
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5001/api",
-  // You only need withCredentials if you are using http-only cookies.
-  // You're using JWT in localStorage, so this can remain false.
+  baseURL: API_BASE_URL,
+  // You're using JWT in localStorage, not cookies:
   withCredentials: false,
   timeout: 10000,
 });
 
-// Attach JWT token from localStorage on every request
+// -----------------------------------------------------------------------------
+// Request interceptor: attach JWT token (if present)
+// -----------------------------------------------------------------------------
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("finGoal_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
-// Global 401 handler (optional)
+// -----------------------------------------------------------------------------
+// Response interceptor: log errors and handle 401
+// -----------------------------------------------------------------------------
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    console.error("❌ Axios error:", err.message);
+
+    if (err.response) {
+      console.error("Status:", err.response.status);
+      console.error("Data:", err.response.data);
+    } else if (err.request) {
+      console.error(
+        "No response received from server. Possible CORS or network issue."
+      );
+    } else {
+      console.error("Request setup error:", err);
+    }
+
+    // Global 401 handler
     if (err?.response?.status === 401) {
       console.warn("🔒 Session expired. Logging out...");
       localStorage.removeItem("finGoal_token");
       localStorage.removeItem("finGoal_name");
-      // If you have a login route in your SPA, you can redirect:
+      // Optionally redirect:
       // window.location.href = "/login";
     }
     return Promise.reject(err);
@@ -35,23 +62,32 @@ api.interceptors.response.use(
 /* --------------------------------------------------------------------------------
  * Backward-compatible named exports
  * These match what the rest of your codebase expects to import from './api/client'
- * (AuthContext.jsx, TransactionPage.js, txStore.js, etc.)
  * -------------------------------------------------------------------------------- */
 
 // ---------- Auth ----------
 export async function registerUser({ email, password, name, username }) {
-  // Your backend expects "username". Allow callers that still pass "name".
+  // Backend expects "username". Allow callers that pass "name".
   const uname = username || name;
-  const { data } = await api.post("/auth/register", { username: uname, email, password });
+  const { data } = await api.post("/auth/register", {
+    username: uname,
+    email,
+    password,
+  });
+
   if (data?.token) localStorage.setItem("finGoal_token", data.token);
-  if (data?.user?.username) localStorage.setItem("finGoal_name", data.user.username);
+  if (data?.user?.username)
+    localStorage.setItem("finGoal_name", data.user.username);
+
   return data;
 }
 
 export async function loginUser(email, password) {
   const { data } = await api.post("/auth/login", { email, password });
+
   if (data?.token) localStorage.setItem("finGoal_token", data.token);
-  if (data?.user?.username) localStorage.setItem("finGoal_name", data.user.username);
+  if (data?.user?.username)
+    localStorage.setItem("finGoal_name", data.user.username);
+
   return data;
 }
 
@@ -71,10 +107,16 @@ export async function addTransaction(tx) {
   return data;
 }
 
+export async function clearAllTransactions() {
+  const { data } = await api.delete("/transactions");
+  return data; // { deleted: N }
+}
+
 // ---------- Upload Statements ----------
 export async function uploadStatement(file) {
   const form = new FormData();
   form.append("file", file);
+
   const { data } = await api.post("/statements/upload", form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
@@ -83,46 +125,39 @@ export async function uploadStatement(file) {
 
 // ---------- Friends ----------
 export async function fetchFriends() {
-  const { data } = await api.get("/friends");        // GET /api/friends
-  return data;                                       // { friends: [...] }
+  const { data } = await api.get("/friends"); // GET /api/friends
+  return data; // { friends: [...] }
 }
 
 export async function fetchFriendsLeaderboard(params = {}) {
   const qs = new URLSearchParams(params).toString();
-  const { data } = await api.get(`/friends/leaderboard${qs ? `?${qs}` : ""}`);
+  const { data } = await api.get(
+    `/friends/leaderboard${qs ? `?${qs}` : ""}`
+  );
   return data; // { leaderboard: [...] }
 }
 
 export async function addFriend(friendUsername) {
-  const { data } = await api.post("/friends", {      // POST /api/friends
+  const { data } = await api.post("/friends", {
     friendUsername,
-  });
-  return data;                                       // { friends: [...] }
+  }); // POST /api/friends
+  return data; // { friends: [...] }
 }
 
 export async function removeFriend(friendId) {
   const { data } = await api.delete(`/friends/${friendId}`); // DELETE /api/friends/:friendId
-  return data;                                       // { friends: [...] }
+  return data; // { friends: [...] }
 }
 
-
-export async function clearAllTransactions() {
-  const { data } = await api.delete("/transactions");
-  return data; // { deleted: N }
-}
-
-// client.js (add these)
+// ---------- Saving rate helpers (if you use them) ----------
 export async function fetchMySavingRate() {
-  const { data } = await api.get("/statements"); // uses your JWT via interceptor
+  const { data } = await api.get("/statements"); // expects { savingRate: number, ... }
   return data?.savingRate ?? 0;
 }
 
 export async function fetchFriendSavingRate(userId) {
-  // If you implemented a /api/users/:id/summary endpoint, call it here.
-  // If not, keep using your server-side leaderboard or whatever you set up.
   const { data } = await api.get(`/users/${userId}/summary`);
   return data?.savingRate ?? 0;
 }
-
 
 export default api;
