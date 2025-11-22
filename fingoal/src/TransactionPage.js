@@ -1,5 +1,4 @@
 
-
 // import React, { useEffect, useMemo, useState } from "react";
 // import { useMonth } from "./state/MonthContext";
 // import { getTransactions } from "./api/client";
@@ -133,12 +132,19 @@
 //   const [loading, setLoading] = useState(false);
 //   const [errMsg, setErrMsg] = useState("");
 
+//   // Saved overrides (used for calculations)
 //   const [categoryOverrides, setCategoryOverrides] = useState(
+//     () => loadCategoryOverrides()
+//   );
+//   // Draft overrides (used for inputs; applied only when hitting "Apply")
+//   const [pendingOverrides, setPendingOverrides] = useState(
 //     () => loadCategoryOverrides()
 //   );
 
 //   useEffect(() => {
+//     // whenever saved overrides change, persist and sync drafts
 //     saveCategoryOverrides(categoryOverrides);
+//     setPendingOverrides(categoryOverrides);
 //   }, [categoryOverrides]);
 
 //   const token = localStorage.getItem("finGoal_token");
@@ -209,7 +215,7 @@
 //     : localMonth || effectiveMonths[0] || "";
 //   const setSelectedMonth = months.length ? setMonth : setLocalMonth;
 
-//   // Apply month filter + auto-category + manual overrides
+//   // Apply month filter + auto-category + SAVED overrides
 //   const baseRows = useMemo(() => {
 //     if (!selectedMonth) return [];
 //     return allTx
@@ -284,11 +290,25 @@
 //     [pieData]
 //   );
 
-//   function handleCategoryChange(txId, newCategory) {
-//     setCategoryOverrides((prev) => ({
+//   // Map category -> color (same as pie slices)
+//   const categoryColorMap = useMemo(() => {
+//     const m = {};
+//     pieData.forEach((d, i) => {
+//       m[d.name] = PIE_COLORS[i % PIE_COLORS.length];
+//     });
+//     return m;
+//   }, [pieData]);
+
+//   // change draft, not saved
+//   function handlePendingCategoryChange(txId, newCategory) {
+//     setPendingOverrides((prev) => ({
 //       ...prev,
 //       [txId]: newCategory,
 //     }));
+//   }
+
+//   function applyCategoryChanges() {
+//     setCategoryOverrides(pendingOverrides);
 //   }
 
 //   // ---------------- Render ----------------
@@ -346,7 +366,7 @@
 //           display: "flex",
 //           gap: 12,
 //           alignItems: "center",
-//           margin: "12px 0 20px",
+//           margin: "12px 0 12px",
 //           flexWrap: "wrap",
 //         }}
 //       >
@@ -396,6 +416,24 @@
 //         </label>
 //       </div>
 
+//       {/* Apply button for category edits */}
+//       <div style={{ marginBottom: 16 }}>
+//         <button
+//           onClick={applyCategoryChanges}
+//           style={{
+//             padding: "6px 12px",
+//             borderRadius: 8,
+//             border: "1px solid #2563eb",
+//             background: "#2563eb",
+//             color: "white",
+//             fontWeight: 600,
+//             cursor: "pointer",
+//           }}
+//         >
+//           Apply category changes
+//         </button>
+//       </div>
+
 //       {/* Summary + Pie chart + Ranking */}
 //       <div
 //         style={{
@@ -439,10 +477,12 @@
 //                   listStylePosition: "inside",
 //                 }}
 //               >
-//                 {rankedCategories.map((d, idx) => {
+//                 {rankedCategories.map((d) => {
 //                   const pct = totalForPie
 //                     ? (d.value / totalForPie) * 100
 //                     : 0;
+//                   const color =
+//                     categoryColorMap[d.name] || "#111827"; // fallback gray
 //                   return (
 //                     <li
 //                       key={d.name}
@@ -450,8 +490,10 @@
 //                         marginBottom: 2,
 //                       }}
 //                     >
-//                       #{idx + 1} {d.name}: {currency(d.value)} (
-//                       {pct.toFixed(1)}%)
+//                       <span style={{ color, fontWeight: 600 }}>
+//                         {d.name}
+//                       </span>
+//                       : {currency(d.value)} ({pct.toFixed(1)}%)
 //                     </li>
 //                   );
 //                 })}
@@ -542,40 +584,48 @@
 //             <div style={{ textAlign: "right" }}>Amount</div>
 //           </div>
 
-//           {filtered.map((r) => (
-//             <div
-//               key={r.id || r.date + r.merchant + r.amount}
-//               style={{
-//                 display: "grid",
-//                 gridTemplateColumns: "140px 1fr 220px 120px",
-//                 padding: "10px 12px",
-//                 borderTop: "1px solid #f3f4f6",
-//                 background: "#fff",
-//               }}
-//             >
-//               <div>{formatDate(r.date)}</div>
-//               <div>{r.merchant}</div>
-//               <div>
-//                 <input
-//                   type="text"
-//                   value={r.category}
-//                   onChange={(e) =>
-//                     handleCategoryChange(r.id, e.target.value)
-//                   }
-//                   list="category-suggestions"
-//                   style={{ width: "100%" }}
-//                 />
+//           {filtered.map((r) => {
+//             const draftCategory =
+//               pendingOverrides[r.id] !== undefined
+//                 ? pendingOverrides[r.id]
+//                 : r.category;
+//             return (
+//               <div
+//                 key={r.id || r.date + r.merchant + r.amount}
+//                 style={{
+//                   display: "grid",
+//                   gridTemplateColumns: "140px 1fr 220px 120px",
+//                   padding: "10px 12px",
+//                   borderTop: "1px solid #f3f4f6",
+//                   background: "#fff",
+//                 }}
+//               >
+//                 <div>{formatDate(r.date)}</div>
+//                 <div>{r.merchant}</div>
+//                 <div>
+//                   <input
+//                     type="text"
+//                     value={draftCategory}
+//                     onChange={(e) =>
+//                       handlePendingCategoryChange(r.id, e.target.value)
+//                     }
+//                     list="category-suggestions"
+//                     style={{ width: "100%" }}
+//                   />
+//                 </div>
+//                 <div style={{ textAlign: "right", color: "#b91c1c" }}>
+//                   -{currency(r.amount)}
+//                 </div>
 //               </div>
-//               <div style={{ textAlign: "right", color: "#b91c1c" }}>
-//                 -{currency(r.amount)}
-//               </div>
-//             </div>
-//           ))}
+//             );
+//           })}
 //         </div>
 //       )}
 //     </div>
 //   );
 // }
+
+/* ------------- TransactionPage.js (FULL UPDATED VERSION) ------------- */
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useMonth } from "./state/MonthContext";
@@ -589,9 +639,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+// Keys for localStorage
 const CATEGORY_OVERRIDES_KEY = "txCategoryOverrides";
+const MERCHANT_RULES_KEY = "merchantCategoryRules";
 
-// Simple formatter: $1,234.56
+// Formatters
 const currency = (n) =>
   Math.abs(n).toLocaleString(undefined, {
     style: "currency",
@@ -611,7 +663,7 @@ const monthKeyOf = (iso) => {
     d.toLocaleString(undefined, { month: "short" }) +
     " " +
     d.getFullYear()
-  ); // e.g., "Oct 2025"
+  );
 };
 
 // ---------- Auto-categorization rules ----------
@@ -654,6 +706,7 @@ const CATEGORY_RULES = [
   },
 ];
 
+// Auto-category function
 function autoCategory(merchant, existingCategory) {
   const current = (existingCategory || "").trim();
   if (current && current !== "Uncategorized") return current;
@@ -665,7 +718,7 @@ function autoCategory(merchant, existingCategory) {
   return "Uncategorized";
 }
 
-// LocalStorage helpers for manual overrides
+// --------- LocalStorage helpers ---------
 function loadCategoryOverrides() {
   try {
     const raw = localStorage.getItem(CATEGORY_OVERRIDES_KEY);
@@ -674,15 +727,31 @@ function loadCategoryOverrides() {
     return {};
   }
 }
-
 function saveCategoryOverrides(obj) {
   try {
     localStorage.setItem(CATEGORY_OVERRIDES_KEY, JSON.stringify(obj));
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
+// Merchant learning helpers
+const normalizeMerchant = (name) =>
+  (name || "").trim().toUpperCase();
+
+function loadMerchantRules() {
+  try {
+    const raw = localStorage.getItem(MERCHANT_RULES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+function saveMerchantRules(obj) {
+  try {
+    localStorage.setItem(MERCHANT_RULES_KEY, JSON.stringify(obj));
+  } catch {}
+}
+
+// Pie colors
 const PIE_COLORS = [
   "#2563eb",
   "#16a34a",
@@ -694,7 +763,6 @@ const PIE_COLORS = [
   "#eab308",
 ];
 
-// Label renderer for the pie: show percentage (e.g., "23%")
 const renderPercentLabel = ({ percent }) =>
   `${(percent * 100).toFixed(0)}%`;
 
@@ -710,23 +778,32 @@ export default function TransactionPage() {
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
 
-  // Saved overrides (used for calculations)
   const [categoryOverrides, setCategoryOverrides] = useState(
     () => loadCategoryOverrides()
   );
-  // Draft overrides (used for inputs; applied only when hitting "Apply")
   const [pendingOverrides, setPendingOverrides] = useState(
     () => loadCategoryOverrides()
   );
 
+  // NEW: merchant rule learning state
+  const [merchantRules, setMerchantRules] = useState(
+    () => loadMerchantRules()
+  );
+
+  // persist merchant rules
   useEffect(() => {
-    // whenever saved overrides change, persist and sync drafts
+    saveMerchantRules(merchantRules);
+  }, [merchantRules]);
+
+  // persist transaction overrides & sync draft
+  useEffect(() => {
     saveCategoryOverrides(categoryOverrides);
     setPendingOverrides(categoryOverrides);
   }, [categoryOverrides]);
 
   const token = localStorage.getItem("finGoal_token");
 
+  // Load transactions
   useEffect(() => {
     if (!token) {
       setErrMsg("Please log in to view your transactions.");
@@ -764,24 +841,19 @@ export default function TransactionPage() {
         }
       } catch (e) {
         if (e?.response?.status === 401) {
-          setErrMsg("Session expired or not logged in. Please log in.");
+          setErrMsg("Session expired. Please log in.");
           localStorage.removeItem("finGoal_token");
           localStorage.removeItem("finGoal_name");
         } else {
-          setErrMsg("Failed to load transactions. Please try again.");
+          setErrMsg("Failed to load transactions.");
         }
-        console.error(
-          "getTransactions failed:",
-          e?.response?.status,
-          e?.message
-        );
       } finally {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // month list
   const monthsLocal = useMemo(() => {
     const keys = Array.from(new Set(allTx.map((t) => monthKeyOf(t.date))));
     return keys.sort((a, b) => new Date("1 " + b) - new Date("1 " + a));
@@ -789,30 +861,39 @@ export default function TransactionPage() {
 
   const effectiveMonths = months.length ? months : monthsLocal;
   const selectedMonth = months.length
-    ? month || effectiveMonths[0] || ""
-    : localMonth || effectiveMonths[0] || "";
+    ? month || effectiveMonths[0]
+    : localMonth || effectiveMonths[0];
   const setSelectedMonth = months.length ? setMonth : setLocalMonth;
 
-  // Apply month filter + auto-category + SAVED overrides
+  // ---------- APPLY: learned rules + overrides + auto rules ----------
   const baseRows = useMemo(() => {
     if (!selectedMonth) return [];
+
     return allTx
       .filter((t) => monthKeyOf(t.date) === selectedMonth)
       .map((t) => {
+        const merchantKey = normalizeMerchant(t.merchant);
+
+        const learned = merchantRules[merchantKey];
         const autoCat = autoCategory(t.merchant, t.category);
         const override = categoryOverrides[t.id];
-        const finalCategory = override || autoCat;
+
+        const finalCategory =
+          override || learned || autoCat || "Uncategorized";
+
         return { ...t, category: finalCategory };
       });
-  }, [allTx, selectedMonth, categoryOverrides]);
+  }, [allTx, selectedMonth, merchantRules, categoryOverrides]);
 
+  // category list
   const allCategories = useMemo(() => {
-    const cats = new Set(
+    const s = new Set(
       baseRows.filter((r) => r.type === "outcome").map((r) => r.category)
     );
-    return ["All", ...Array.from(cats)];
+    return ["All", ...s];
   }, [baseRows]);
 
+  // filtering + sorting
   const { filtered, totalOutcome } = useMemo(() => {
     let rows = baseRows.filter((r) => r.type === "outcome");
 
@@ -824,6 +905,7 @@ export default function TransactionPage() {
           r.category.toLowerCase().includes(t)
       );
     }
+
     if (cat !== "All") rows = rows.filter((r) => r.category === cat);
 
     switch (sortBy) {
@@ -844,13 +926,12 @@ export default function TransactionPage() {
     return { filtered: rows, totalOutcome };
   }, [baseRows, q, cat, sortBy]);
 
-  // Pie chart data: totals by category for ALL spending in the month
+  // pie data
   const pieData = useMemo(() => {
     const map = new Map();
     for (const r of baseRows) {
       if (r.type !== "outcome") continue;
-      const current = map.get(r.category) || 0;
-      map.set(r.category, current + r.amount);
+      map.set(r.category, (map.get(r.category) || 0) + r.amount);
     }
     return Array.from(map.entries()).map(([name, value]) => ({
       name,
@@ -858,17 +939,16 @@ export default function TransactionPage() {
     }));
   }, [baseRows]);
 
-  // Total + ranking from pieData
   const totalForPie = useMemo(
     () => pieData.reduce((s, d) => s + d.value, 0),
     [pieData]
   );
+
   const rankedCategories = useMemo(
     () => [...pieData].sort((a, b) => b.value - a.value),
     [pieData]
   );
 
-  // Map category -> color (same as pie slices)
   const categoryColorMap = useMemo(() => {
     const m = {};
     pieData.forEach((d, i) => {
@@ -877,7 +957,7 @@ export default function TransactionPage() {
     return m;
   }, [pieData]);
 
-  // change draft, not saved
+  // draft update
   function handlePendingCategoryChange(txId, newCategory) {
     setPendingOverrides((prev) => ({
       ...prev,
@@ -885,8 +965,22 @@ export default function TransactionPage() {
     }));
   }
 
+  // APPLY button
   function applyCategoryChanges() {
     setCategoryOverrides(pendingOverrides);
+
+    // Also LEARN merchant → category patterns
+    setMerchantRules((prev) => {
+      const next = { ...prev };
+      for (const tx of allTx) {
+        const pending = pendingOverrides[tx.id];
+        if (!pending) continue;
+
+        const key = normalizeMerchant(tx.merchant);
+        next[key] = pending;
+      }
+      return next;
+    });
   }
 
   // ---------------- Render ----------------
@@ -994,7 +1088,7 @@ export default function TransactionPage() {
         </label>
       </div>
 
-      {/* Apply button for category edits */}
+      {/* Apply button */}
       <div style={{ marginBottom: 16 }}>
         <button
           onClick={applyCategoryChanges}
@@ -1060,7 +1154,8 @@ export default function TransactionPage() {
                     ? (d.value / totalForPie) * 100
                     : 0;
                   const color =
-                    categoryColorMap[d.name] || "#111827"; // fallback gray
+                    categoryColorMap[d.name] || "#111827";
+
                   return (
                     <li
                       key={d.name}
@@ -1080,7 +1175,7 @@ export default function TransactionPage() {
           </div>
         </div>
 
-        {/* RIGHT: pie chart */}
+        {/* Pie chart */}
         {pieData.length > 0 && (
           <div
             style={{
@@ -1122,7 +1217,7 @@ export default function TransactionPage() {
         )}
       </div>
 
-      {/* Category suggestions for typing */}
+      {/* Category typeahead */}
       <datalist id="category-suggestions">
         {allCategories
           .filter((c) => c !== "All")
@@ -1131,7 +1226,7 @@ export default function TransactionPage() {
           ))}
       </datalist>
 
-      {/* List */}
+      {/* Transaction list */}
       {filtered.length === 0 ? (
         <div style={{ color: "#6b7280" }}>
           No spending found for <b>{selectedMonth}</b>
@@ -1163,10 +1258,11 @@ export default function TransactionPage() {
           </div>
 
           {filtered.map((r) => {
-            const draftCategory =
+            const draftCat =
               pendingOverrides[r.id] !== undefined
                 ? pendingOverrides[r.id]
                 : r.category;
+
             return (
               <div
                 key={r.id || r.date + r.merchant + r.amount}
@@ -1183,7 +1279,7 @@ export default function TransactionPage() {
                 <div>
                   <input
                     type="text"
-                    value={draftCategory}
+                    value={draftCat}
                     onChange={(e) =>
                       handlePendingCategoryChange(r.id, e.target.value)
                     }
