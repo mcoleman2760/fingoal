@@ -496,14 +496,15 @@ export default function TransactionPage() {
           <div
             style={{
               marginTop: 10,
-              fontSize: 14,
+              fontSize: 17,
               color: "#374151",
             }}
           >
             <div
               style={{
                 fontWeight: 700,
-                marginBottom: 4,
+                marginBottom: 6,
+                fontSize: 20,
               }}
             >
               Category ranking
@@ -549,23 +550,25 @@ export default function TransactionPage() {
         {/* Pie chart */}
         {pieData.length > 0 && (
           <div
-            style={{
-              flex: 1,
-              minWidth: 260,
-              height: 260,
-              background: "#fff",
-              borderRadius: 12,
-              border: "1px solid #e5e7eb",
-              padding: 8,
-            }}
-          >
+  style={{
+    flex: 1,
+    minWidth: 260,
+    height: 340,
+    background: "#fff",
+    borderRadius: 12,
+    border: "1px solid #e5e7eb",
+    padding: 8,
+  }}
+>
+
+
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pieData}
                   dataKey="value"
                   nameKey="name"
-                  outerRadius={90}
+                  outerRadius={130}
                   // turn off labels on the slices themselves
                   label={renderPercentLabel}
                   // labelLine={false}
@@ -586,7 +589,7 @@ export default function TransactionPage() {
                     return [`${currency(value)} (${pct.toFixed(1)}%)`, name];
                   }}
                 />
-                <Legend />
+                {/* <Legend /> */}
               </PieChart>
             </ResponsiveContainer>
           </div>
