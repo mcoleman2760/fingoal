@@ -293,10 +293,10 @@ body {
 
 .navbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   padding: 12px 20px;
-  background-color: #ffffff;
+  background-color: #f4f1ef ;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
@@ -311,6 +311,7 @@ body {
 
 .nav-links {
   display: flex;
+  
   gap: 20px;
   align-items: center;
 }

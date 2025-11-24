@@ -9,6 +9,7 @@ import txRoutes from "./routes/transaction.routes.js";
 import goalsRoutes from "./routes/goals.routes.js";
 import statementsRoutes from "./routes/statements.routes.js";
 import friendRoutes from "./routes/friendRoutes.js"; // ESM import, note .js
+import sharedGoalsRoutes from "./routes/sharedGoals.routes.js"; // <-- new import
 
 // ✅ create app BEFORE using it
 const app = express();
@@ -26,15 +27,21 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 // routes
-app.get("/api/hello", (_req, res) => res.json({ message: "Hello from FinGoal API 👋" }));
+app.get("/api/hello", (_req, res) =>
+  res.json({ message: "Hello from FinGoal API 👋" })
+);
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", txRoutes);
 app.use("/api/goals", goalsRoutes);
 app.use("/api/statements", statementsRoutes);
-app.use("/api/friends", friendRoutes); // ✅ mount after app exists
+app.use("/api/friends", friendRoutes);
+app.use("/api/shared-goals", sharedGoalsRoutes);
+ // <-- mount shared goals routes
 
 const port = process.env.PORT || 5001;
 
 connectDB().then(() => {
-  app.listen(port, () => console.log(`🚀 Server running on http://localhost:${port}`));
+  app.listen(port, () =>
+    console.log(`🚀 Server running on http://localhost:${port}`)
+  );
 });

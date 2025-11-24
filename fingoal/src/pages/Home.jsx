@@ -147,11 +147,7 @@ export default function Home() {
         }}
       >
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 30 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>
-              Welcome back, {user} 👋
-            </h1>
-          </div>
+          
 
           <div
             style={{

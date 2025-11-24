@@ -126,3 +126,24 @@ export async function fetchFriendSavingRate(userId) {
 
 
 export default api;
+
+// Shared goals
+// api/client.js
+
+// Fetch all shared goals for the current user
+export async function fetchSharedGoals() {
+  const res = await fetch("/api/shared-goals");
+  if (!res.ok) throw new Error("Failed to fetch shared goals");
+  return res.json(); // returns { goals: [...] }
+}
+
+// Update progress/contribution for a shared goal
+export async function updateSharedGoalProgress(goalId, amount) {
+  const res = await fetch("/api/shared-goals", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ goalId, amount }),
+  });
+  if (!res.ok) throw new Error("Failed to update shared goal");
+  return res.json(); // returns updated goal
+}
