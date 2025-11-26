@@ -200,7 +200,7 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   // You're using JWT in localStorage, not cookies:
   withCredentials: false,
-  timeout: 10000,
+  timeout: 60000,
 });
 
 // -----------------------------------------------------------------------------
