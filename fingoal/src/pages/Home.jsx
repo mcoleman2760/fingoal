@@ -115,30 +115,6 @@ export default function Home() {
 
   // ---------- signed-in view ----------
   if (user) {
-    // async function handleReset() {
-    //   if (
-    //     !window.confirm(
-    //       "Are you sure you want to delete ALL transactions and reset to 0?"
-    //     )
-    //   )
-    //     return;
-    //   try {
-    //     const res = await fetch("http://localhost:5001/api/transactions", {
-    //       method: "DELETE",
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //         Authorization: `Bearer ${localStorage.getItem("finGoal_token")}`,
-    //       },
-    //     });
-    //     if (!res.ok) throw new Error("Failed to reset transactions");
-    //     const data = await res.json();
-    //     alert(`✅ Reset complete — ${data.deleted || 0} transactions deleted.`);
-    //     window.location.reload(); // refreshes UI (Income/Outcome back to 0)
-    //   } catch (e) {
-    //     console.error("Reset error:", e);
-    //     alert("❌ Failed to reset transactions.");
-    //   }
-    // }
     async function handleReset() {
       if (
         !window.confirm(
