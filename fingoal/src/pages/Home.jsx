@@ -16,6 +16,8 @@ import { uploadStatement as uploadStatementToAPI } from "../api/client";
 // import { importCSVFile, uploadFromFile as uploadStatementToAPI } from "../data/txStore";
 import { registerUser } from "../api/client"; // reuse the backward-compatible export
 import { resetAllTransactions } from "../data/txStore";
+import api from "../api/client";
+
 
 export default function Home() {
   // AuthContext exposes: user (string name), login(email,pw), logout()
@@ -113,6 +115,30 @@ export default function Home() {
 
   // ---------- signed-in view ----------
   if (user) {
+    // async function handleReset() {
+    //   if (
+    //     !window.confirm(
+    //       "Are you sure you want to delete ALL transactions and reset to 0?"
+    //     )
+    //   )
+    //     return;
+    //   try {
+    //     const res = await fetch("http://localhost:5001/api/transactions", {
+    //       method: "DELETE",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //         Authorization: `Bearer ${localStorage.getItem("finGoal_token")}`,
+    //       },
+    //     });
+    //     if (!res.ok) throw new Error("Failed to reset transactions");
+    //     const data = await res.json();
+    //     alert(`✅ Reset complete — ${data.deleted || 0} transactions deleted.`);
+    //     window.location.reload(); // refreshes UI (Income/Outcome back to 0)
+    //   } catch (e) {
+    //     console.error("Reset error:", e);
+    //     alert("❌ Failed to reset transactions.");
+    //   }
+    // }
     async function handleReset() {
       if (
         !window.confirm(
@@ -120,24 +146,17 @@ export default function Home() {
         )
       )
         return;
+    
       try {
-        const res = await fetch("http://localhost:5001/api/transactions", {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("finGoal_token")}`,
-          },
-        });
-        if (!res.ok) throw new Error("Failed to reset transactions");
-        const data = await res.json();
+        const { data } = await api.delete("/transactions"); // <-- uses Render in prod
         alert(`✅ Reset complete — ${data.deleted || 0} transactions deleted.`);
-        window.location.reload(); // refreshes UI (Income/Outcome back to 0)
+        window.location.reload();
       } catch (e) {
         console.error("Reset error:", e);
         alert("❌ Failed to reset transactions.");
       }
     }
-
+    
     return (
       <div
         style={{

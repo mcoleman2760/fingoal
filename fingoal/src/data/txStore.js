@@ -322,23 +322,53 @@ export async function resetAllTransactions() {
   }
 }
 
+// export async function uploadPDF(file) {
+//   const formData = new FormData();
+//   formData.append("file", file);
+
+//   try {
+//     const res = await fetch("http://localhost:5001/api/transactions/upload-pdf", {
+//       method: "POST",
+//       headers: {
+//         Authorization: `Bearer ${localStorage.getItem("finGoal_token")}`,
+//       },
+//       body: formData,
+//     });
+
+//     const data = await res.json();
+
+//     if (!res.ok) {
+//       // Use backend message if available
+//       const msg = data?.error || "PDF upload failed";
+//       throw new Error(msg);
+//     }
+
+//     // Refresh local cache
+//     await primeTxStore(true);
+
+//     // Return info about imported transactions
+//     return data.imported || 0;
+//   } catch (err) {
+//     console.error("PDF upload error:", err.message);
+//     throw new Error(err.message || "Unknown error during PDF upload");
+//   }
+// }
+
+// at top of file you already have:
+// import api from "../api/client";
+
 export async function uploadPDF(file) {
   const formData = new FormData();
   formData.append("file", file);
 
   try {
-    const res = await fetch("http://localhost:5001/api/transactions/upload-pdf", {
-      method: "POST",
+    const { data } = await api.post("/transactions/upload-pdf", formData, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("finGoal_token")}`,
+        "Content-Type": "multipart/form-data",
       },
-      body: formData,
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      // Use backend message if available
+    if (!data || data.error) {
       const msg = data?.error || "PDF upload failed";
       throw new Error(msg);
     }
