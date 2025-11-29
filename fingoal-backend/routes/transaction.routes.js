@@ -1,17 +1,16 @@
 // fingoal-backend/routes/transaction.routes.js
 import { Router } from "express";
 import auth from "../middleware/auth.js";
-import { list, create, clearAllTransactions } from "../controllers/transactionController.js";
+import multer from "multer";
+import { list, create, clearAllTransactions, uploadPDF } from "../controllers/transactionController.js";
 
 const router = Router();
+const upload = multer();
 
-// List my transactions
 router.get("/", auth, list);
-
-// Create one transaction
 router.post("/", auth, create);
-
-// Reset all my transactions
 router.delete("/", auth, clearAllTransactions);
+
+router.post("/upload-pdf", auth, upload.single("file"), uploadPDF);
 
 export default router;

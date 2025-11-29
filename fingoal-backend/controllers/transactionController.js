@@ -1,5 +1,43 @@
-// fingoal-backend/controllers/transactionController.js
+import { parsePDFTransactions } from "../utils/pdfParser.js";
 import Transaction from "../models/Transaction.js";
+
+export const uploadPDF = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No PDF file uploaded" });
+    }
+
+    const buffer = req.file.buffer;
+
+    const parsed = await parsePDFTransactions(buffer);
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return res.status(200).json({
+        imported: 0,
+        skipped: 1,
+        message: "No valid transactions found in PDF",
+      });
+    }
+
+    const userId = req.user?.id;
+
+    const docs = parsed.map(tx => ({
+      ...tx,
+      user: userId,
+    }));
+
+    await Transaction.insertMany(docs);
+
+    res.json({
+      imported: docs.length,
+      skipped: 0,
+      message: `Imported ${docs.length} transactions`,
+    });
+  } catch (err) {
+    console.error("❌ PDF upload error:", err);
+    res.status(500).json({ message: "PDF import failed", error: err.message });
+  }
+};
 
 /**
  * Utility: coerce and normalize a transaction payload before insert.
