@@ -291,14 +291,16 @@ body {
   font-weight: bold;
 }
 
+/* === NAVBAR === */
+
 .navbar {
   display: flex;
   justify-content: space-around;
   align-items: center;
   padding: 12px 20px;
-  background-color: #f4f1ef ;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f1ef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
 }
 
@@ -311,7 +313,6 @@ body {
 
 .nav-links {
   display: flex;
-  
   gap: 20px;
   align-items: center;
 }
@@ -328,21 +329,33 @@ body {
 }
 
 .nav-button {
-  padding: 6px 14px;
-  background-color: #007bff;
-  color: white;
+  padding: 8px 16px; /* slightly larger for modern look */
+  background: linear-gradient(135deg, #3e28ac, #16a34a); /* gradient */
+  color: #ffffff;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px; /* more rounded edges */
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* subtle shadow */
 }
 
 .nav-button:hover {
-  background-color: #0056b3;
+  background-color: #0056b3; /* darker blue on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* slightly stronger shadow */
+  transform: translateY(-2px); /* lift effect */
 }
 
-/* Hamburger menu toggle */
+.nav-button:active {
+  background-color: #004080; /* pressed state */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(0);
+}
+
+/* We keep nav-toggle styles in case you add a burger later,
+   but we DO NOT hide nav-links on mobile anymore. */
+
 .nav-toggle {
   display: none;
   flex-direction: column;
@@ -370,57 +383,26 @@ body {
   transform: rotate(-45deg) translate(5px, -5px);
 }
 
-/* Responsive */
+/* ✅ Responsive: keep links VISIBLE on mobile, just wrap them */
+
 @media (max-width: 768px) {
-  .nav-links {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    flex-direction: column;
-    background-color: #ffffff;
-    padding: 20px;
-    gap: 15px;
-    border-top: 1px solid #ddd;
-    display: none;
+  .navbar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    justify-content: center;
   }
 
-  .nav-links.open {
-    display: flex;
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .nav-link {
+    font-size: 0.85rem;
   }
 
   .nav-toggle {
-    display: flex;
+    display: none; /* unused for now */
   }
 }
-
-.nav-button {
-  padding: 8px 16px;              /* slightly larger for modern look */
-  background-color: #007bff;      /* primary blue */
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;            /* more rounded edges */
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* subtle shadow */
-}
-
-.nav-button:hover {
-  background-color: #0056b3;       /* darker blue on hover */
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15); /* slightly stronger shadow */
-  transform: translateY(-2px);     /* lift effect */
-}
-
-.nav-button:active {
-  background-color: #004080;       /* pressed state */
-  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-  transform: translateY(0);
-}
-
-.nav-button {
-  background: linear-gradient(135deg, #3e28ac, #16a34a); /* green gradient */
-  color: #fff;
-}
-
