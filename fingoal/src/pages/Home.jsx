@@ -11,6 +11,7 @@ import {
   Outlet,
   useNavigate,
 } from "react-router-dom";
+import "./Home.css";
 // For API upload, import from api/client (txStore doesn't export uploadStatement)
 import { uploadStatement as uploadStatementToAPI } from "../api/client";
 // import { importCSVFile, uploadFromFile as uploadStatementToAPI } from "../data/txStore";
@@ -134,107 +135,111 @@ export default function Home() {
     }
     
     return (
-      <div
-        style={{
-          background: "#f9fafb",
-          minHeight: "100vh",
-          padding: "40px 20px",
-        }}
-      >
-        <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          
-
-          <div
-            style={{
-              background: "white",
-              borderRadius: 16,
-              padding: 20,
-              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-            }}
-          >
-            <h2 style={{ marginTop: 0, fontSize: 22 }}>Upload Statements</h2>
-            <p style={{ color: "#6b7280", marginBottom: 12 }}>
-              Upload CSV or PDF exports from your bank.
-            </p>
-
-            <input
-              type="file"
-              multiple
-              onChange={onFileChange}
-              accept=".csv,.pdf"
-            />
-
+      
+        <div
+          style={{
+            background: "#f9fafb",
+            minHeight: "100vh",
+            padding: "40px 20px",
+          }}
+        >
+          <div style={{ maxWidth: 600, margin: "0 auto" }}>
             <div
               style={{
-                marginTop: 16,
-                display: "flex",
-                gap: 10,
-                flexWrap: "wrap",
+                background: "white",
+                borderRadius: 16,
+                padding: 20,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
               }}
             >
-              <button
-                onClick={uploadStatements}
-                style={{
-                  background: "#10b981",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "8px 16px",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                Upload
-              </button>
+              <h2 style={{ marginTop: 0, fontSize: 22 }}>Upload Statements</h2>
+              <p style={{ color: "#6b7280", marginBottom: 12 }}>
+                Upload CSV or PDF exports from your bank.
+              </p>
 
-              <button
-                onClick={() => {
-                  setFiles([]);
-                  setUploadStatus(null);
-                }}
-                style={{
-                  background: "#9ca3af",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "8px 16px",
-                  cursor: "pointer",
-                }}
-              >
-                Clear
-              </button>
+              <input
+                type="file"
+                multiple
+                onChange={onFileChange}
+                accept=".csv,.pdf"
+              />
 
-              <button
-                onClick={handleReset}
+              <div
                 style={{
-                  background: "#dc2626",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "8px 16px",
-                  cursor: "pointer",
-                  fontWeight: 600,
+                  marginTop: 16,
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
                 }}
               >
-                Reset All Transactions
-              </button>
+                <button
+                  onClick={uploadStatements}
+                  style={{
+                    background: "#10b981",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "8px 16px",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  Upload
+                </button>
+
+                <button
+                  onClick={() => {
+                    setFiles([]);
+                    setUploadStatus(null);
+                  }}
+                  style={{
+                    background: "#9ca3af",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "8px 16px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Clear
+                </button>
+
+                <button
+                  onClick={handleReset}
+                  style={{
+                    background: "#dc2626",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "8px 16px",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  Reset All Transactions
+                </button>
+              </div>
+
+              {files.length > 0 && (
+                <ul style={{ marginTop: 16 }}>
+                  {files.map((f, i) => (
+                    <li key={i}>
+                      {f.name} ({Math.round(f.size / 1024)} KB)
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {uploadStatus && (
+                <p style={{ color: "#065f46", marginTop: 10 }}>
+                  {uploadStatus}
+                </p>
+              )}
             </div>
-
-            {files.length > 0 && (
-              <ul style={{ marginTop: 16 }}>
-                {files.map((f, i) => (
-                  <li key={i}>
-                    {f.name} ({Math.round(f.size / 1024)} KB)
-                  </li>
-                ))}
-              </ul>
-            )}
-            {uploadStatus && (
-              <p style={{ color: "#065f46", marginTop: 10 }}>{uploadStatus}</p>
-            )}
           </div>
+          <a href="/instructions" className="trouble">Problems with uploading?</a>
         </div>
-      </div>
+       
+      
     );
   }
 

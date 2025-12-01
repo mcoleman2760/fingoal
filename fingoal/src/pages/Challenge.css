@@ -202,3 +202,41 @@
     transform: translateX(100%);
   }
 }
+
+/* Tabs */
+.tab-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  margin-top: 16px;
+  justify-content: center;
+}
+.tab-button {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: transform .15s, background .15s;
+}
+.tab-button.active {
+  background: #2563eb;
+  color: #fff;
+  transform: scale(1.03);
+}
+.tab-button:hover { background: #e5e7eb; }
+
+/* Small extras */
+.error-text, .error { color: #b91c1c; margin-top: 8px; }
+.remove-btn {
+  margin-left: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  cursor: pointer;
+}
+.remove-btn:hover { opacity: 0.9; }

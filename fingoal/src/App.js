@@ -24,6 +24,7 @@ import Intro from "./pages/Intro"; // ✅ import SharedGoals page
 
 import "./App.css";
 import logo from "./fingoalLogo.png";
+import Instructions from "./pages/Instructions";
 
 // --- Top Nav ---
 function Nav() {
@@ -50,12 +51,10 @@ function Nav() {
           Spending
         </Link>
         <Link to="/challenge" className="nav-link">
-          Challenge
+          Friends
         </Link>
 
-        <Link to="/shared-goals" className="nav-link">
-          Shared Goals
-        </Link>
+        
 
         {/* ✅ add Shared Goals link */}
       </div>
@@ -142,6 +141,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <SharedGoals />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/instructions" // ✅ protected route
+              element={
+                <ProtectedRoute>
+                  <Instructions />
                 </ProtectedRoute>
               }
             />
