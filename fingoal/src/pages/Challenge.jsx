@@ -1,4 +1,4 @@
-// CombinedChallengeAndGoals.jsx
+// Challenge.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { getUserProgress } from "./Savings";
@@ -13,7 +13,7 @@ import {
 } from "../api/client";
 
 import "./Challenge.css";
-import "./SharedGoals.css";
+// import "./SharedGoals.css";
 
 export default function ChallengeAndSharedGoals() {
   const { user } = useAuth();

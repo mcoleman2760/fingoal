@@ -2,7 +2,7 @@
 
 // DailySpendingCalendar.jsx
 import React, { useMemo } from "react";
-import { getDailySeries } from "./data/txStore";   // if this file is in /pages, use ../data/txStore
+import { getDailySeries } from "./data/txStore";   
 import { useMonth } from "./state/MonthContext";
 
 const money = (n) =>

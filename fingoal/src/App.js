@@ -18,8 +18,8 @@ import Spending from "./pages/Spending";
 import Savings from "./pages/Savings";
 import Challenge from "./pages/Challenge";
 import Login from "./pages/Login";
-import SharedGoals from "./pages/SharedGoals"; // ✅ import SharedGoals page
-import Intro from "./pages/Intro"; // ✅ import SharedGoals page
+import SharedGoals from "./pages/SharedGoals"; 
+import Intro from "./pages/Intro"; 
 
 
 import "./App.css";
@@ -137,7 +137,7 @@ export default function App() {
               }
             />
             <Route
-              path="/shared-goals" // ✅ protected route
+              path="/shared-goals" 
               element={
                 <ProtectedRoute>
                   <SharedGoals />
@@ -145,7 +145,7 @@ export default function App() {
               }
             />
             <Route
-              path="/instructions" // ✅ protected route
+              path="/instructions" 
               element={
                 <ProtectedRoute>
                   <Instructions />

@@ -14,7 +14,7 @@ import {
 import "./Home.css";
 // For API upload, import from api/client (txStore doesn't export uploadStatement)
 import { uploadStatement as uploadStatementToAPI } from "../api/client";
-// import { importCSVFile, uploadFromFile as uploadStatementToAPI } from "../data/txStore";
+
 import { registerUser } from "../api/client"; // reuse the backward-compatible export
 import { resetAllTransactions } from "../data/txStore";
 import api from "../api/client";
