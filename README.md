@@ -7,7 +7,7 @@ FinGoal is a financial goal tracking and savings motivation app.
 Inside the fingoal-backend folder, create a file name as .env
 
 2. Add the following variables
-MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/?appName=Cluster0
+MONGO_URI=mongodb+srv://username:password@cluster0.mongodb.net/?appName=Cluster0
 JWT_SECRET=<JWT_SECRET=your_jwt_secret_key_here>
 PORT=5001
 
