@@ -14,7 +14,7 @@ JWT_SECRET=**your_jwt_secret_key_here**
 
 PORT=5001
 
-4. Replace placeholders with real values
+3. Replace placeholders with real values
 Replace **username** and **password** with the actual MongoDB Atlas database user credentials.
 Replace **your_jwt_secret_key_here** with the team's actual JWT secret key.
 
