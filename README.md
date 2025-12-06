@@ -9,7 +9,9 @@ Inside the fingoal-backend folder, create a file name as .env
 2. Add the following variables
 
 MONGO_URI=mongodb+srv://**username**:**password**@cluster0.mongodb.net/?appName=Cluster0
+
 JWT_SECRET=**your_jwt_secret_key_here**
+
 PORT=5001
 
 4. Replace placeholders with real values
