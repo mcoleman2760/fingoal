@@ -6,13 +6,13 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 
 // Keys for localStorage
 const CATEGORY_OVERRIDES_KEY = "txCategoryOverrides";
 const MERCHANT_RULES_KEY = "merchantCategoryRules";
+const TX_SPLITS_KEY = "txCategorySplits";
 
 // Formatters
 const currency = (n) =>
@@ -105,8 +105,7 @@ function saveCategoryOverrides(obj) {
 }
 
 // Merchant learning helpers
-const normalizeMerchant = (name) =>
-  (name || "").trim().toUpperCase();
+const normalizeMerchant = (name) => (name || "").trim().toUpperCase();
 
 function loadMerchantRules() {
   try {
@@ -122,6 +121,68 @@ function saveMerchantRules(obj) {
   } catch {}
 }
 
+// Split helpers
+function loadSplits() {
+  try {
+    const raw = localStorage.getItem(TX_SPLITS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+function saveSplits(obj) {
+  try {
+    localStorage.setItem(TX_SPLITS_KEY, JSON.stringify(obj));
+  } catch {}
+}
+
+// Expand a list of rows using split info for outcome transactions.
+// If a tx has splits, those split rows replace the original in summaries.
+function expandWithSplits(rows, splitsByTx) {
+  const out = [];
+  for (const t of rows) {
+    if (t.type !== "outcome") {
+      out.push(t);
+      continue;
+    }
+
+    const splits = splitsByTx[t.id];
+    if (!splits || !splits.length) {
+      out.push(t);
+      continue;
+    }
+
+    const cleaned = splits.filter((s) => Number(s.amount) > 0);
+    if (!cleaned.length) {
+      out.push(t);
+      continue;
+    }
+
+    let sum = 0;
+    cleaned.forEach((s) => {
+      const amt = Number(s.amount) || 0;
+      sum += amt;
+      out.push({
+        ...t,
+        category: (s.category || t.category || "Uncategorized").trim(),
+        amount: amt,
+      });
+    });
+
+    // If the splits don't reach the full amount, keep a remainder in the
+    // original category so that totals still add up.
+    const remainder = t.amount - sum;
+    if (remainder > 0.01) {
+      out.push({
+        ...t,
+        category: t.category,
+        amount: remainder,
+      });
+    }
+  }
+  return out;
+}
+
 // Pie colors
 const PIE_COLORS = [
   "#2563eb",
@@ -134,11 +195,11 @@ const PIE_COLORS = [
   "#eab308",
 ];
 
-const renderPercentLabel = ({ percent }) =>
-  `${(percent * 100).toFixed(0)}%`;
+const renderPercentLabel = ({ percent }) => `${(percent * 100).toFixed(0)}%`;
 
 export default function TransactionPage() {
-  const monthCtx = useMonth?.() || { month: "", setMonth: () => {}, months: [] };
+  const monthCtx =
+    useMonth?.() || { month: "", setMonth: () => {}, months: [] };
   const { month, setMonth, months } = monthCtx;
 
   const [allTx, setAllTx] = useState([]);
@@ -149,17 +210,20 @@ export default function TransactionPage() {
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
 
-  const [categoryOverrides, setCategoryOverrides] = useState(
-    () => loadCategoryOverrides()
+  const [categoryOverrides, setCategoryOverrides] = useState(() =>
+    loadCategoryOverrides()
   );
-  const [pendingOverrides, setPendingOverrides] = useState(
-    () => loadCategoryOverrides()
+  const [pendingOverrides, setPendingOverrides] = useState(() =>
+    loadCategoryOverrides()
   );
 
-  // NEW: merchant rule learning state
-  const [merchantRules, setMerchantRules] = useState(
-    () => loadMerchantRules()
+  const [merchantRules, setMerchantRules] = useState(() =>
+    loadMerchantRules()
   );
+
+  // NEW: per-transaction splits, persisted in localStorage
+  const [txSplits, setTxSplits] = useState(() => loadSplits());
+  const [openSplitTxId, setOpenSplitTxId] = useState(null);
 
   // persist merchant rules
   useEffect(() => {
@@ -171,6 +235,11 @@ export default function TransactionPage() {
     saveCategoryOverrides(categoryOverrides);
     setPendingOverrides(categoryOverrides);
   }, [categoryOverrides]);
+
+  // persist splits
+  useEffect(() => {
+    saveSplits(txSplits);
+  }, [txSplits]);
 
   const token = localStorage.getItem("finGoal_token");
 
@@ -256,7 +325,7 @@ export default function TransactionPage() {
       });
   }, [allTx, selectedMonth, merchantRules, categoryOverrides]);
 
-  // category list
+  // category list (from base rows, not splits)
   const allCategories = useMemo(() => {
     const s = new Set(
       baseRows.filter((r) => r.type === "outcome").map((r) => r.category)
@@ -264,7 +333,7 @@ export default function TransactionPage() {
     return ["All", ...s];
   }, [baseRows]);
 
-  // filtering + sorting
+  // filtering + sorting for table (still per original tx)
   const { filtered, totalOutcome } = useMemo(() => {
     let rows = baseRows.filter((r) => r.type === "outcome");
 
@@ -297,18 +366,21 @@ export default function TransactionPage() {
     return { filtered: rows, totalOutcome };
   }, [baseRows, q, cat, sortBy]);
 
-  // pie data
+  // pie data uses splits (this is where Amazon $20 can become $10 + $10)
   const pieData = useMemo(() => {
+    const rowsWithSplits = expandWithSplits(
+      baseRows.filter((r) => r.type === "outcome"),
+      txSplits
+    );
     const map = new Map();
-    for (const r of baseRows) {
-      if (r.type !== "outcome") continue;
+    for (const r of rowsWithSplits) {
       map.set(r.category, (map.get(r.category) || 0) + r.amount);
     }
     return Array.from(map.entries()).map(([name, value]) => ({
       name,
       value,
     }));
-  }, [baseRows]);
+  }, [baseRows, txSplits]);
 
   const totalForPie = useMemo(
     () => pieData.reduce((s, d) => s + d.value, 0),
@@ -328,7 +400,7 @@ export default function TransactionPage() {
     return m;
   }, [pieData]);
 
-  // draft update
+  // draft update for simple category overrides (non-split)
   function handlePendingCategoryChange(txId, newCategory) {
     setPendingOverrides((prev) => ({
       ...prev,
@@ -354,7 +426,41 @@ export default function TransactionPage() {
     });
   }
 
-  // ---------------- Render ----------------
+  // ------- Split editor handlers -------
+  function toggleSplitEditor(txId) {
+    setOpenSplitTxId((prev) => (prev === txId ? null : txId));
+  }
+
+  function handleSplitFieldChange(txId, index, field, value) {
+    setTxSplits((prev) => {
+      const current = prev[txId] ? [...prev[txId]] : [];
+      const row = { ...(current[index] || { category: "", amount: "" }) };
+      row[field] = field === "amount" ? value : value;
+      current[index] = row;
+      return { ...prev, [txId]: current };
+    });
+  }
+
+  function addSplitRow(txId) {
+    setTxSplits((prev) => {
+      const current = prev[txId] ? [...prev[txId]] : [];
+      current.push({ category: "", amount: "" });
+      return { ...prev, [txId]: current };
+    });
+  }
+
+  function removeSplitRow(txId, index) {
+    setTxSplits((prev) => {
+      const current = prev[txId] ? [...prev[txId]] : [];
+      current.splice(index, 1);
+      if (!current.length) {
+        const { [txId]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [txId]: current };
+    });
+  }
+
   const page = { padding: 20, maxWidth: 1100, margin: "0 auto" };
   const title = { fontSize: 28, fontWeight: 800, margin: 0 };
 
@@ -447,10 +553,7 @@ export default function TransactionPage() {
 
         <label>
           Sort:&nbsp;
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
             <option value="amount-high">Amount (high → low)</option>
@@ -490,7 +593,10 @@ export default function TransactionPage() {
         {/* LEFT: total + ranking */}
         <div style={{ minWidth: 260 }}>
           <div>
-            <b>Total spending:</b> {currency(totalOutcome)}
+            <b>Total spending (filtered list):</b> {currency(totalOutcome)}
+          </div>
+          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
+            Pie chart and ranking below use any splits you define.
           </div>
 
           <div
@@ -525,8 +631,7 @@ export default function TransactionPage() {
                   const pct = totalForPie
                     ? (d.value / totalForPie) * 100
                     : 0;
-                  const color =
-                    categoryColorMap[d.name] || "#111827";
+                  const color = categoryColorMap[d.name] || "#111827";
 
                   return (
                     <li
@@ -550,18 +655,16 @@ export default function TransactionPage() {
         {/* Pie chart */}
         {pieData.length > 0 && (
           <div
-  style={{
-    flex: 1,
-    minWidth: 260,
-    height: 340,
-    background: "#fff",
-    borderRadius: 12,
-    border: "1px solid #e5e7eb",
-    padding: 8,
-  }}
->
-
-
+            style={{
+              flex: 1,
+              minWidth: 260,
+              height: 340,
+              background: "#fff",
+              borderRadius: 12,
+              border: "1px solid #e5e7eb",
+              padding: 8,
+            }}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -569,9 +672,7 @@ export default function TransactionPage() {
                   dataKey="value"
                   nameKey="name"
                   outerRadius={130}
-                  // turn off labels on the slices themselves
                   label={renderPercentLabel}
-                  // labelLine={false}
                 >
                   {pieData.map((entry, index) => (
                     <Cell
@@ -581,15 +682,14 @@ export default function TransactionPage() {
                   ))}
                 </Pie>
 
-                {/* Tooltip: compute percentage from value / totalForPie */}
                 <Tooltip
                   formatter={(value, name) => {
-                    const pct = totalForPie ? (value / totalForPie) * 100 : 0;
-                    // return [displayValue, displayName]
+                    const pct = totalForPie
+                      ? (value / totalForPie) * 100
+                      : 0;
                     return [`${currency(value)} (${pct.toFixed(1)}%)`, name];
                   }}
                 />
-                {/* <Legend /> */}
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -624,7 +724,7 @@ export default function TransactionPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "140px 1fr 220px 120px",
+              gridTemplateColumns: "140px 1fr 220px 120px 90px",
               fontWeight: 600,
               padding: "10px 12px",
               background: "#f3f4f6",
@@ -634,6 +734,7 @@ export default function TransactionPage() {
             <div>Merchant</div>
             <div>Category (editable)</div>
             <div style={{ textAlign: "right" }}>Amount</div>
+            <div style={{ textAlign: "center" }}>Split</div>
           </div>
 
           {filtered.map((r) => {
@@ -642,34 +743,183 @@ export default function TransactionPage() {
                 ? pendingOverrides[r.id]
                 : r.category;
 
+            const splits = txSplits[r.id] || [];
+            const splitTotal = splits.reduce(
+              (s, sRow) => s + (Number(sRow.amount) || 0),
+              0
+            );
+
             return (
-              <div
+              <React.Fragment
                 key={r.id || r.date + r.merchant + r.amount}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "140px 1fr 220px 120px",
-                  padding: "10px 12px",
-                  borderTop: "1px solid #f3f4f6",
-                  background: "#fff",
-                }}
               >
-                <div>{formatDate(r.date)}</div>
-                <div>{r.merchant}</div>
-                <div>
-                  <input
-                    type="text"
-                    value={draftCat}
-                    onChange={(e) =>
-                      handlePendingCategoryChange(r.id, e.target.value)
-                    }
-                    list="category-suggestions"
-                    style={{ width: "100%" }}
-                  />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "140px 1fr 220px 120px 90px",
+                    padding: "10px 12px",
+                    borderTop: "1px solid #f3f4f6",
+                    background: "#fff",
+                  }}
+                >
+                  <div>{formatDate(r.date)}</div>
+                  <div>{r.merchant}</div>
+                  <div>
+                    <input
+                      type="text"
+                      value={draftCat}
+                      onChange={(e) =>
+                        handlePendingCategoryChange(
+                          r.id,
+                          e.target.value
+                        )
+                      }
+                      list="category-suggestions"
+                      style={{ width: "100%" }}
+                    />
+                    {splits.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: 4,
+                          fontSize: 11,
+                          color:
+                            Math.abs(splitTotal - r.amount) < 0.01
+                              ? "#059669"
+                              : "#b45309",
+                        }}
+                      >
+                        Split total {currency(splitTotal)} / original{" "}
+                        {currency(r.amount)}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ textAlign: "right", color: "#b91c1c" }}>
+                    -{currency(r.amount)}
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <button
+                      onClick={() => toggleSplitEditor(r.id)}
+                      style={{
+                        fontSize: 11,
+                        padding: "4px 8px",
+                        borderRadius: 6,
+                        border: "1px solid #d1d5db",
+                        background: "#f9fafb",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {openSplitTxId === r.id ? "Close" : "Split"}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ textAlign: "right", color: "#b91c1c" }}>
-                  -{currency(r.amount)}
-                </div>
-              </div>
+
+                {/* Split editor panel */}
+                {openSplitTxId === r.id && (
+                  <div
+                    style={{
+                      background: "#f9fafb",
+                      borderTop: "1px dashed #e5e7eb",
+                      padding: "8px 16px 10px",
+                      fontSize: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <div style={{ fontWeight: 600 }}>
+                        Split this {currency(r.amount)} transaction
+                        into multiple categories
+                      </div>
+                      <div>
+                        Total of splits:{" "}
+                        <b>{currency(splitTotal)}</b> / original{" "}
+                        {currency(r.amount)}
+                      </div>
+                    </div>
+
+                    {splits.map((sRow, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "1fr 120px 70px",
+                          gap: 8,
+                          marginBottom: 4,
+                        }}
+                      >
+                        <input
+                          type="text"
+                          placeholder="Category (e.g. Groceries)"
+                          value={sRow.category || ""}
+                          onChange={(e) =>
+                            handleSplitFieldChange(
+                              r.id,
+                              idx,
+                              "category",
+                              e.target.value
+                            )
+                          }
+                          list="category-suggestions"
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Amount"
+                          value={sRow.amount}
+                          onChange={(e) =>
+                            handleSplitFieldChange(
+                              r.id,
+                              idx,
+                              "amount",
+                              e.target.value
+                            )
+                          }
+                        />
+                        <button
+                          onClick={() => removeSplitRow(r.id, idx)}
+                          style={{
+                            fontSize: 11,
+                            borderRadius: 6,
+                            border: "1px solid #fecaca",
+                            background: "#fee2e2",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={() => addSplitRow(r.id)}
+                      style={{
+                        marginTop: 4,
+                        fontSize: 11,
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                        border: "1px solid #2563eb",
+                        background: "#e0ecff",
+                        cursor: "pointer",
+                      }}
+                    >
+                      + Add split row
+                    </button>
+
+                    <div style={{ marginTop: 6, color: "#6b7280" }}>
+                      These splits will be used for the category pie
+                      chart and ranking. If the split total is less
+                      than the original amount, the remainder stays in
+                      the main category.
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
             );
           })}
         </div>
@@ -677,4 +927,3 @@ export default function TransactionPage() {
     </div>
   );
 }
-
