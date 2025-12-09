@@ -1,16 +1,18 @@
 import { Router } from "express";
-
+import auth from "../middleware/auth.js";
 import {
-  getSharedGoals,
+  listSharedGoals,
   createSharedGoal,
-  contributeToSharedGoal,
+  updateSharedGoal,
+  deleteSharedGoal,
 } from "../controllers/sharedGoalController.js";
-import  auth  from "../middleware/auth.js"; // make sure you have this
 
 const router = Router();
 
-router.get("/", auth, getSharedGoals);
+router.get("/", auth, listSharedGoals);
 router.post("/", auth, createSharedGoal);
-router.put("/:goalId", auth, contributeToSharedGoal);
+router.put("/", auth, updateSharedGoal);
+router.delete("/shared-goals/:id", deleteSharedGoal);
+
 
 export default router;

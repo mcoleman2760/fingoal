@@ -9,37 +9,39 @@ import {
   removeFriend as apiRemoveFriend,
   fetchFriendsLeaderboard,
   fetchSharedGoals,
+  createSharedGoalAPI,
   updateSharedGoalProgress,
 } from "../api/client";
 
 import "./Challenge.css";
-// import "./SharedGoals.css";
 
 export default function ChallengeAndSharedGoals() {
   const { user } = useAuth();
   const meProgressFallback = getUserProgress();
 
-  // TAB STATE
   const [activeTab, setActiveTab] = useState("challenge");
 
-  // SAVINGS CHALLENGE STATE
+  // --- Savings Challenge ---
   const [serverFriends, setServerFriends] = useState([]);
   const [leaderboardRows, setLeaderboardRows] = useState([]);
   const [loadingChallenge, setLoadingChallenge] = useState(true);
   const [errChallenge, setErrChallenge] = useState("");
-
   const [newFriend, setNewFriend] = useState("");
   const [avatar, setAvatar] = useState("🐱");
   const [badge, setBadge] = useState("New Challenger");
   const [message, setMessage] = useState("");
+  
   const [xpPopup, setXpPopup] = useState(null);
 
-  // SHARED GOALS STATE
+  // --- Shared Goals ---
   const [goals, setGoals] = useState([]);
   const [loadingGoals, setLoadingGoals] = useState(true);
   const [errGoals, setErrGoals] = useState("");
+  const [newGoalTitle, setNewGoalTitle] = useState("");
+  const [newGoalTarget, setNewGoalTarget] = useState("");
+  const [newGoalMembers, setNewGoalMembers] = useState("");
 
-  // LOAD FRIENDS + LEADERBOARD
+  // --- Load friends + leaderboard ---
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -53,18 +55,16 @@ export default function ChallengeAndSharedGoals() {
         if (!mounted) return;
         setServerFriends(friends || []);
         setLeaderboardRows(leaderboard || []);
-      } catch (e) {
-        if (mounted) setErrChallenge(e?.message || "Failed to load friends");
+      } catch {
+        if (mounted) setErrChallenge("Failed to load friends");
       } finally {
         if (mounted) setLoadingChallenge(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, []);
 
-  // LOAD SHARED GOALS
+  // --- Load shared goals ---
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -74,26 +74,22 @@ export default function ChallengeAndSharedGoals() {
         const res = await fetchSharedGoals();
         if (!mounted) return;
         setGoals(res.sharedGoals || []);
-      } catch (e) {
-        if (mounted) setErrGoals(e?.message || "Failed to load shared goals");
+      } catch {
+        if (mounted) setErrGoals("Failed to load shared goals");
       } finally {
         if (mounted) setLoadingGoals(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, []);
 
-  // ADD FRIEND
+  // --- Add Friend ---
   const addFriend = async () => {
     const friendUsername = newFriend.trim();
     if (!friendUsername) return;
 
-    setErrChallenge("");
-    setLoadingChallenge(true);
-
     try {
+      setLoadingChallenge(true);
       const response = await apiAddFriend(friendUsername);
       setServerFriends(response.friends || []);
 
@@ -104,22 +100,19 @@ export default function ChallengeAndSharedGoals() {
       const currentUser = leaderboardResponse.leaderboard.find(
         (u) => u.username === user.username
       );
-
       if (currentUser?.xp % 100 === 20) {
         setXpPopup("+20 XP gained for adding a new friend!");
         setTimeout(() => setXpPopup(null), 3000);
       }
-    } catch (e) {
-      setErrChallenge(e?.message || "Failed to add friend");
+    } catch {
+      setErrChallenge("Failed to add friend");
     } finally {
       setLoadingChallenge(false);
     }
   };
 
-  // REMOVE FRIEND
+  // --- Remove Friend ---
   const removeFriend = async (friendId) => {
-    setErrChallenge("");
-
     try {
       const [{ friends }, { leaderboard }] = await Promise.all([
         apiRemoveFriend(friendId),
@@ -127,48 +120,75 @@ export default function ChallengeAndSharedGoals() {
       ]);
       setServerFriends(friends || []);
       setLeaderboardRows(leaderboard || []);
-    } catch (e) {
-      setErrChallenge(e?.message || "Failed to remove friend");
+    } catch {
+      setErrChallenge("Failed to remove friend");
     }
   };
 
-  // SHARED GOAL CONTRIBUTION
+  // --- Contribute to shared goal ---
   const contribute = async (goalId, amount) => {
-    setErrGoals("");
     try {
-      const updatedGoal = await updateSharedGoalProgress(goalId, amount);
-      setGoals((prev) => prev.map((g) => (g._id === goalId ? updatedGoal : g)));
-    } catch (e) {
-      setErrGoals(e?.message || "Failed to update goal");
+      const updated = await updateSharedGoalProgress(goalId, amount);
+      setGoals((prev) =>
+        prev.map((g) => (g.id === goalId || g._id === goalId ? updated : g))
+      );
+    } catch {
+      setErrGoals("Failed to update goal");
     }
   };
 
-  // FORMAT LEADERBOARD
+  // --- Create shared goal ---
+  const createSharedGoal = async () => {
+    const members = newGoalMembers
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!members.includes(user.username)) members.push(user.username);
+
+    try {
+      const goal = await createSharedGoalAPI({
+        title: newGoalTitle,
+        targetAmount: Number(newGoalTarget),
+        members,
+      });
+      setGoals((prev) => [...prev, goal]);
+      setNewGoalTitle("");
+      setNewGoalTarget("");
+      setNewGoalMembers("");
+    } catch {
+      setErrGoals("Failed to create shared goal");
+    }
+  };
+
+  // --- Delete shared goal ---
+  const deleteSharedGoal = async (goalId) => {
+    try {
+      await fetch(`/api/shared-goals/${goalId}`, { method: "DELETE" });
+      setGoals((prev) =>
+        prev.filter((g) => g._id !== goalId && g.id !== goalId)
+      );
+    } catch {
+      setErrGoals("Failed to delete goal");
+    }
+  };
+
+  // --- Leaderboard rows with avatars, messages, badges ---
   const displayRows = useMemo(() => {
+    const avatars = ["🐱", "🐶", "🦊", "🐼", "🐯", "🐧", "🐸"];
     return leaderboardRows
       .map((row, i) => ({
         id: row._id,
-        name:
-          String(row.username) === String(user?.username)
-            ? "You"
-            : row.username,
+        name: row.username === user?.username ? "You" : row.username,
         progress:
           row.progress ||
-          (String(row.username) === String(user?.username)
-            ? meProgressFallback
-            : 0),
+          (row.username === user?.username ? meProgressFallback : 0),
         xp: row.xp || 0,
         level: row.level || 1,
-        avatar: ["🐱", "🐶", "🦊", "🐼", "🐯", "🐧", "🐸"][
-          (row.username?.length || i) % 7
-        ],
-        badge:
-          String(row.username) === String(user?.username)
-            ? "My Journey"
-            : "Goal Crusher",
+        avatar: avatars[i % avatars.length],
+        badge: row.username === user?.username ? "My Journey" : "Goal Crusher",
         message:
-          String(row.username) === String(user?.username)
-            ? "Let's reach our goals together!"
+          row.username === user?.username
+            ? "Let’s reach our goals together!"
             : "",
       }))
       .sort((a, b) => b.progress - a.progress);
@@ -184,7 +204,6 @@ export default function ChallengeAndSharedGoals() {
         >
           💰 Savings Challenge
         </button>
-
         <button
           className={`tab-button ${activeTab === "goals" ? "active" : ""}`}
           onClick={() => setActiveTab("goals")}
@@ -193,16 +212,12 @@ export default function ChallengeAndSharedGoals() {
         </button>
       </div>
 
-      {/* CHALLENGE TAB */}
+      {/* SAVINGS CHALLENGE TAB */}
       {activeTab === "challenge" && (
         <div className="challenge-container old-theme">
           <h1 className="challenge-header">💰 Savings Challenge</h1>
-          <p className="challenge-description">
-            Compete with your friends and see who reaches their savings goals
-            first!
-          </p>
 
-          {xpPopup && <div className="xp-popup">🎉 {xpPopup}</div>}
+          {xpPopup && <div className="xp-popup">{xpPopup}</div>}
 
           <div className="connect-section">
             <h3>Connect with Friends</h3>
@@ -250,7 +265,6 @@ export default function ChallengeAndSharedGoals() {
                 ➕ Add Friend
               </button>
             </div>
-
             {errChallenge && <div className="error-text">{errChallenge}</div>}
           </div>
 
@@ -282,7 +296,7 @@ export default function ChallengeAndSharedGoals() {
                       <div className="friend-message">“{friend.message}”</div>
                     )}
                   </div>
-                  {friend.id !== "me" && String(friend.id).length === 24 && (
+                  {friend.name !== "You" && (
                     <button
                       onClick={() => removeFriend(friend.id)}
                       className="remove-btn"
@@ -301,53 +315,73 @@ export default function ChallengeAndSharedGoals() {
       {activeTab === "goals" && (
         <div className="shared-goals-container">
           <h1>🌟 Shared Goals</h1>
+
           {errGoals && <div className="error">{errGoals}</div>}
+
+          <div className="new-goal-form">
+            <input
+              type="text"
+              value={newGoalTitle}
+              placeholder="Goal title"
+              onChange={(e) => setNewGoalTitle(e.target.value)}
+            />
+            <input
+              type="number"
+              value={newGoalTarget}
+              placeholder="Target amount"
+              onChange={(e) => setNewGoalTarget(e.target.value)}
+            />
+            <input
+              type="text"
+              value={newGoalMembers}
+              placeholder="Members (comma separated)"
+              onChange={(e) => setNewGoalMembers(e.target.value)}
+            />
+            <button onClick={createSharedGoal}>Create Goal</button>
+          </div>
+
           {loadingGoals ? (
-            <div>Loading shared goals…</div>
+            <p>Loading…</p>
           ) : goals.length === 0 ? (
             <p>No shared goals yet.</p>
           ) : (
             <div className="goals-list">
-              {goals.map((goal) => (
-                <div key={goal._id} className="goal-card">
-                  <h3>{goal.title}</h3>
-                  <p>{goal.description}</p>
-                  <div className="progress-bar-container">
-                    <div
-                      className="progress-fill"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          (goal.currentAmount / goal.targetAmount) * 100
-                        )}%`,
-                      }}
-                    />
+              {goals.map((goal) => {
+                const otherMembers = goal.members?.filter(
+                  (m) => m !== user.username
+                );
+
+                return (
+                  <div key={goal.id || goal._id} className="goal-card">
+                    <h3>{goal.title}</h3>
+                    <p className="goal-members">
+                      👥 Members:{" "}
+                      {otherMembers?.length
+                        ? otherMembers.join(", ")
+                        : "No friends listed"}
+                    </p>
+                    <p>
+                      {goal.currentAmount || 0} / {goal.targetAmount} saved
+                    </p>
+                    <div className="goal-actions">
+                      {[5, 10, 20].map((amt) => (
+                        <button
+                          key={amt}
+                          onClick={() => contribute(goal.id || goal._id, amt)}
+                        >
+                          +{amt}
+                        </button>
+                      ))}
+                      <button
+                        className="remove-btn"
+                        onClick={() => deleteSharedGoal(goal.id || goal._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <p>
-                    {goal.currentAmount} / {goal.targetAmount} contributed
-                  </p>
-                  <div className="goal-actions">
-                    <button
-                      onClick={() => contribute(goal._id, 5)}
-                      className="btn-contribute"
-                    >
-                      +5
-                    </button>
-                    <button
-                      onClick={() => contribute(goal._id, 10)}
-                      className="btn-contribute"
-                    >
-                      +10
-                    </button>
-                    <button
-                      onClick={() => contribute(goal._id, 20)}
-                      className="btn-contribute"
-                    >
-                      +20
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
