@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { PieChart, Pie, Cell } from "recharts";
 import {
   getMonths as months,
   getNetForMonth,
@@ -13,6 +14,11 @@ const fmt = (n) => {
     maximumFractionDigits: 0,
   });
 };
+
+const COLORS = [
+  "#3b82f6", "#10b981", "#f59e0b", "#ef4444",
+  "#8b5cf6", "#14b8a6", "#ec4899", "#6366f1"
+];
 
 function getYearToDateNet() {
   let total = 0;
@@ -185,11 +191,19 @@ export default function Savings() {
   const btn = { padding: "10px 14px", border: "none", borderRadius: 10, background: "#2563eb", color: "#fff", fontWeight: 700, cursor: "pointer" };
   const deleteBtn = { ...btn, background: "#ef4444" };
   const small = { color: "#6b7280", fontSize: 13 };
+  const breakdownData = enrichedGoals.map((g) => ({
+    name: g.name,
+    value: g.saved,
+  }));
+  const remainingData = enrichedGoals.map((g) => ({
+    name: g.name,
+    value: g.remaining,
+  }));
 
   return (
     <div style={pageStyle}>
       <div style={containerStyle}>
-      <div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 12 }}>
           <h1
             style={{
               fontSize: 28,
@@ -205,10 +219,163 @@ export default function Savings() {
             net (Income − Outcome).
           </p>
         </div>
-        <div style={{ fontSize: 18, margin: "8px 0", fontWeight: 600 }}>
-          Total Savings Available: {fmt(totals.remainingAfterAll)}
+        <div
+          style={{
+            ...cardStyle,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 20,
+            marginTop: 20,
+            marginBottom: 20,
+            padding: 20,
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 14, color: "#6b7280" }}>Total Goals</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#2563eb" }}>
+              {goals.length}
+            </div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 14, color: "#6b7280" }}>Goals Reached</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#10b981" }}>
+              {enrichedGoals.filter(g => g.remaining === 0).length}
+            </div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 14, color: "#6b7280" }}>Savings Available</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#f59e0b" }}>
+              {fmt(totals.remainingAfterAll)}
+            </div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 14, color: "#6b7280" }}>Overall Progress</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#7c3aed" }}>
+              {enrichedGoals.length === 0
+                ? "0%"
+                : Math.round(
+                  enrichedGoals.reduce((acc, g) => acc + (g.pct || 0), 0) /
+                  enrichedGoals.length
+                ) + "%"}
+            </div>
+          </div>
         </div>
-
+        <div style={{
+          ...cardStyle,
+          marginTop: 20,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 20,
+          padding: 20,
+        }}>
+          <div style={{ flex: 1, textAlign: "center" }}>
+            <h3>Savings Breakdown</h3>
+            <div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: -20 }}>
+              <PieChart width={260} height={260}>
+                <Pie
+                  data={breakdownData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {breakdownData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </div>
+            <div style={{ marginTop: 0, textAlign: "center" }}>
+              <div style={{ fontSize: 14, color: "#6b7280" }}>Total Saved</div>
+              <div style={{ fontSize: 28, fontWeight: 900 }}>
+                {fmt(totals.totalSaved)}
+              </div>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              {breakdownData.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 6,
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: "50%",
+                      background: COLORS[idx % COLORS.length],
+                    }}
+                  />
+                  <span style={{ fontSize: 14 }}>
+                    {item.name}: <b>{fmt(item.value)}</b>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ flex: 1, textAlign: "center" }}>
+            <h3>Remaining Breakdown</h3>
+            <div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: -20 }}>
+              <PieChart width={260} height={260}>
+                <Pie
+                  data={remainingData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {remainingData.map((entry, index) => (
+                    <Cell key={`cell-rem-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </div>
+            <div style={{ marginTop: 0 }}>
+              <div style={{ fontSize: 14, color: "#6b7280" }}>Remaining Total</div>
+              <div style={{ fontSize: 28, fontWeight: 900 }}>
+                {fmt(
+                  enrichedGoals.reduce((sum, g) => sum + (g.remaining || 0), 0)
+                )}
+              </div>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              {remainingData.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 6,
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: "50%",
+                      background: COLORS[idx % COLORS.length],
+                    }}
+                  />
+                  <span style={{ fontSize: 14 }}>
+                    {item.name}: <b>{fmt(item.value)}</b>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
         <div style={{ ...cardStyle, marginTop: 20 }}>
           <h3>Year-To-Date Summary</h3>
           <p>Total Net for {new Date().getFullYear()}: <b>{fmt(totals.totalNet)}</b></p>
@@ -216,7 +383,6 @@ export default function Savings() {
           <p>Total pool (net + adjustments): <b>{fmt(totals.totalPool)}</b></p>
           <p>Total allocated to goals: <b>{fmt(totals.totalSaved)}</b></p>
         </div>
-
         <div style={cardStyle}>
           <h3 style={{ marginTop: 0 }}>Create a Goal</h3>
           <form onSubmit={addGoal} style={{ display: "grid", gridTemplateColumns: "1fr 180px 180px 160px auto", gap: 10, alignItems: "center" }}>
@@ -225,12 +391,10 @@ export default function Savings() {
             <select style={selectStyle} value={goalMonth} onChange={(e) => setGoalMonth(e.target.value)}>
               {months().map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
-            <input style={input} placeholder="When (e.g., December)" value={eventWhen} onChange={(e) => setEventWhen(e.target.value)} />
             <button style={btn} type="submit">Add Goal</button>
           </form>
           <p style={{ ...small, marginTop: 8 }}>We calculate progress using the aggregated pool (YTD net + adjustments) shared across your goals.</p>
         </div>
-
         <div style={{ marginTop: 14 }}>
           {enrichedGoals.length === 0 ? (
             <div style={cardStyle}><p style={{ ...small }}>No goals yet. Add one above!</p></div>
@@ -287,7 +451,6 @@ export default function Savings() {
             <button style={btn} onClick={addAdjustment}>Add</button>
           </div>
         </div>
-
         <div style={{ marginTop: 20 }}>
           <h4 style={{ marginBottom: 10 }}>Adjustments</h4>
           {adjustments.length === 0 ? (
