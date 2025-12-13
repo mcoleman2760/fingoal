@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { getUserProgress } from "./Savings";
-
 import {
   fetchFriends,
   addFriend as apiAddFriend,
@@ -11,8 +10,8 @@ import {
   fetchSharedGoals,
   createSharedGoalAPI,
   updateSharedGoalProgress,
+  deleteSharedGoal as deleteSharedGoalAPI,
 } from "../api/client";
-
 import "./Challenge.css";
 
 export default function ChallengeAndSharedGoals() {
@@ -30,7 +29,6 @@ export default function ChallengeAndSharedGoals() {
   const [avatar, setAvatar] = useState("🐱");
   const [badge, setBadge] = useState("New Challenger");
   const [message, setMessage] = useState("");
-  
   const [xpPopup, setXpPopup] = useState(null);
 
   // --- Shared Goals ---
@@ -64,14 +62,14 @@ export default function ChallengeAndSharedGoals() {
     return () => (mounted = false);
   }, []);
 
-  // --- Load shared goals ---
+  // --- Load shared goals (with populated members) ---
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setErrGoals("");
         setLoadingGoals(true);
-        const res = await fetchSharedGoals();
+        const res = await fetchSharedGoals(); // backend populates members
         if (!mounted) return;
         setGoals(res.sharedGoals || []);
       } catch {
@@ -87,7 +85,6 @@ export default function ChallengeAndSharedGoals() {
   const addFriend = async () => {
     const friendUsername = newFriend.trim();
     if (!friendUsername) return;
-
     try {
       setLoadingChallenge(true);
       const response = await apiAddFriend(friendUsername);
@@ -130,7 +127,7 @@ export default function ChallengeAndSharedGoals() {
     try {
       const updated = await updateSharedGoalProgress(goalId, amount);
       setGoals((prev) =>
-        prev.map((g) => (g.id === goalId || g._id === goalId ? updated : g))
+        prev.map((g) => (g._id === updated._id ? updated : g))
       );
     } catch {
       setErrGoals("Failed to update goal");
@@ -139,40 +136,55 @@ export default function ChallengeAndSharedGoals() {
 
   // --- Create shared goal ---
   const createSharedGoal = async () => {
+    // Split and clean members input
+    
     const members = newGoalMembers
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    if (!members.includes(user.username)) members.push(user.username);
+
+    // Always include current user first
+      members.unshift(user);
+    
+
+
+    // Check we have at least one member
+    if (members.length === 0) {
+      setErrGoals("You must include at least one member.");
+      return;
+    }
 
     try {
       const goal = await createSharedGoalAPI({
-        title: newGoalTitle,
+        title: newGoalTitle.trim(),
         targetAmount: Number(newGoalTarget),
         members,
       });
+
+      // Add to local state
       setGoals((prev) => [...prev, goal]);
       setNewGoalTitle("");
       setNewGoalTarget("");
       setNewGoalMembers("");
-    } catch {
-      setErrGoals("Failed to create shared goal");
+    } catch (err) {
+      console.error(err);
+      setErrGoals(
+        err?.response?.data?.message || "Failed to create shared goal"
+      );
     }
   };
 
   // --- Delete shared goal ---
   const deleteSharedGoal = async (goalId) => {
     try {
-      await fetch(`/api/shared-goals/${goalId}`, { method: "DELETE" });
-      setGoals((prev) =>
-        prev.filter((g) => g._id !== goalId && g.id !== goalId)
-      );
+      await deleteSharedGoalAPI(goalId);
+      setGoals((prev) => prev.filter((g) => g._id !== goalId));
     } catch {
       setErrGoals("Failed to delete goal");
     }
   };
 
-  // --- Leaderboard rows with avatars, messages, badges ---
+  // --- Leaderboard rows ---
   const displayRows = useMemo(() => {
     const avatars = ["🐱", "🐶", "🦊", "🐼", "🐯", "🐧", "🐸"];
     return leaderboardRows
@@ -334,7 +346,7 @@ export default function ChallengeAndSharedGoals() {
             <input
               type="text"
               value={newGoalMembers}
-              placeholder="Members (comma separated)"
+              placeholder="Members (comma separated usernames)"
               onChange={(e) => setNewGoalMembers(e.target.value)}
             />
             <button onClick={createSharedGoal}>Create Goal</button>
@@ -347,19 +359,26 @@ export default function ChallengeAndSharedGoals() {
           ) : (
             <div className="goals-list">
               {goals.map((goal) => {
-                const otherMembers = goal.members?.filter(
-                  (m) => m !== user.username
-                );
+                // Extract usernames from populated members
+                const otherMembers = goal.members
+                  ?.filter((m) => m.username !== user.username)
+                  .map((m) => m.username);
 
                 return (
-                  <div key={goal.id || goal._id} className="goal-card">
+                  <div key={goal._id} className="goal-card">
                     <h3>{goal.title}</h3>
                     <p className="goal-members">
                       👥 Members:{" "}
-                      {otherMembers?.length
-                        ? otherMembers.join(", ")
+                      {Array.isArray(goal.members)
+                        ? goal.members
+                            .map((m) =>
+                              typeof m === "string" ? m : m.username
+                            ) // convert objects to strings
+                            .filter((m) => m !== user.username)
+                            .join(", ") || "No friends listed"
                         : "No friends listed"}
                     </p>
+
                     <p>
                       {goal.currentAmount || 0} / {goal.targetAmount} saved
                     </p>
@@ -367,14 +386,14 @@ export default function ChallengeAndSharedGoals() {
                       {[5, 10, 20].map((amt) => (
                         <button
                           key={amt}
-                          onClick={() => contribute(goal.id || goal._id, amt)}
+                          onClick={() => contribute(goal._id, amt)}
                         >
                           +{amt}
                         </button>
                       ))}
                       <button
                         className="remove-btn"
-                        onClick={() => deleteSharedGoal(goal.id || goal._id)}
+                        onClick={() => deleteSharedGoal(goal._id)}
                       >
                         Delete
                       </button>

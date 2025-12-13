@@ -138,27 +138,27 @@ export async function fetchFriendSavingRate(userId) {
 // ---------- Shared goals ----------
 // ---------- Shared Goals ----------
 export async function fetchSharedGoals() {
-  const { data } = await api.get("/shared-goals"); // GET /api/shared-goals
-  return data; // { sharedGoals: [...] }
+  const { data } = await api.get("/shared-goals");
+  return data; // expects { sharedGoals: [...] }
 }
 
 export async function createSharedGoalAPI(goalData) {
-  const { data } = await api.post("/shared-goals", goalData); // POST /api/shared-goals
-  return data; // newly created goal
+  const { data } = await api.post("/shared-goals", goalData);
+  return data;
 }
-
 export async function updateSharedGoalProgress(goalId, amount) {
-  const { data } = await api.put("/shared-goals", { goalId, amount }); // PUT /api/shared-goals
-  return data; // updated goal
+  const { data } = await api.put(`/shared-goals/${goalId}`, { amount });
+  return data; // should return the updated goal document
 }
 
-// DELETE shared goal
-// ---------- Shared goals ----------
-// ---------- Shared goals ----------
+
 export async function deleteSharedGoal(goalId) {
   const { data } = await api.delete(`/shared-goals/${goalId}`);
-  return data; // { success: true }
+  return data;
 }
+
+
+
 
 
 

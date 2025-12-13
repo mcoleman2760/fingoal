@@ -1,98 +1,100 @@
-// fingoal-backend/controllers/sharedGoalController.js
-// Mock shared goals controller for this week's milestone
-// Two friends can see the same goal
-// Can switch to MongoDB later
+// controllers/sharedGoalController.js
+import User from "../models/User.js";
+import SharedGoal from "../models/SharedGoal.js";
 
-let mockSharedGoals = [
-  {
-    id: "sg1",
-    title: "Emergency Fund Together",
-    targetAmount: 2000,
-    currentAmount: 300,
-    members: ["a", "mike"], // usernames of the members
-  },
-  {
-    id: "sg2",
-    title: "Vacation Fund",
-    targetAmount: 1500,
-    currentAmount: 450,
-    members: ["a", "jo"],
-  },
-];
+// Helper: get user ID from username
+const getUserIdsFromUsernames = async (usernames) => {
+  const users = await User.find({ username: { $in: usernames } }).select("_id");
+  return users.map((u) => u._id);
+};
 
 // GET /api/shared-goals
-export async function listSharedGoals(req, res) {
-  // Only return goals where current user is a member
-  const username = req.user?.username;
-  if (!username) return res.status(400).json({ error: "User not found" });
+export const listSharedGoals = async (req, res) => {
+  try {
+    const username = req.user.username; // from auth middleware
+    const sharedGoals = await SharedGoal.find({ members: username });
+    res.json({ sharedGoals });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch shared goals" });
+  }
+};
 
-  const userGoals = mockSharedGoals.filter((g) => g.members.includes(username));
-  res.json({ sharedGoals: userGoals });
-}
 
 // POST /api/shared-goals
 export async function createSharedGoal(req, res) {
-  const { title, targetAmount, members = [] } = req.body;
-  const username = req.user?.username;
+  try {
+    const { title, targetAmount, members } = req.body;
 
-  if (!title || targetAmount == null) {
-    return res
-      .status(400)
-      .json({ error: "title and targetAmount are required" });
+    if (
+      !title ||
+      !targetAmount ||
+      !members ||
+      !Array.isArray(members) ||
+      members.length === 0
+    ) {
+      return res.status(400).json({ message: "Missing or invalid fields" });
+    }
+
+    // Ensure all members are non-empty strings
+    const cleanedMembers = members.map((m) => m.trim()).filter(Boolean);
+    if (cleanedMembers.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Members must include at least one valid username" });
+    }
+
+    const goal = new SharedGoal({
+      title,
+      targetAmount,
+      currentAmount: 0,
+      members: cleanedMembers,
+    });
+
+    await goal.save();
+    res.status(201).json(goal);
+  } catch (err) {
+    console.error("Create goal error:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to create shared goal", error: err.message });
   }
-
-  if (!members.includes(username)) members.push(username);
-
-  const goal = {
-    id: "sg" + (mockSharedGoals.length + 1),
-    title,
-    targetAmount: Number(targetAmount),
-    currentAmount: 0,
-    members,
-  };
-  mockSharedGoals.push(goal);
-  res.status(201).json(goal);
 }
+
+
 
 // PUT /api/shared-goals
-export async function updateSharedGoal(req, res) {
-  const { goalId, amount } = req.body;
-  const username = req.user?.username;
+export const updateSharedGoal = async (req, res) => {
+  const { id } = req.params; // <-- get goal ID from URL
+  const { amount } = req.body; // <-- get contribution from body
 
-  if (!goalId || amount == null)
-    return res.status(400).json({ error: "goalId and amount required" });
+  try {
+    const goal = await SharedGoal.findById(id);
+    if (!goal) return res.status(404).json({ message: "Goal not found" });
 
-  const goal = mockSharedGoals.find((g) => g.id === goalId);
-  if (!goal) return res.status(404).json({ error: "Goal not found" });
+    goal.currentAmount += amount;
+    await goal.save();
 
-  if (!goal.members.includes(username))
-    return res.status(403).json({ error: "You are not a member of this goal" });
+    res.json(goal);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update goal" });
+  }
+};
 
-  goal.currentAmount += Number(amount);
-  res.json(goal);
-}
 
-// DELETE /api/shared-goals/:goalId
 // DELETE /api/shared-goals/:id
-export async function deleteSharedGoal(req, res) {
+export const deleteSharedGoal = async (req, res) => {
   const { id } = req.params;
-  const username = req.user?.username;
 
-  if (!username) return res.status(400).json({ error: "User not found" });
-
-  const goalIndex = mockSharedGoals.findIndex((g) => g.id === id);
-  if (goalIndex === -1) return res.status(404).json({ error: "Goal not found" });
-
-  const goal = mockSharedGoals[goalIndex];
-
-  // Only allow deletion if current user is a member
-  // if (!goal.members.includes(username)) {
-  //   return res.status(403).json({ error: "You are not a member of this goal" });
-  // }
-
-  // Remove the goal from the array
-  mockSharedGoals.splice(goalIndex, 1);
-
-  res.json({ message: "Shared goal deleted successfully" });
-}
-
+  try {
+    const deletedGoal = await SharedGoal.findByIdAndDelete(id);
+    if (!deletedGoal) {
+      return res.status(404).json({ message: "Goal not found" });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Failed to delete shared goal:", err);
+    res.status(500).json({ message: "Failed to delete goal" });
+  }
+};
