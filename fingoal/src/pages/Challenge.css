@@ -344,3 +344,21 @@
 .btn-contribute:hover {
   background: linear-gradient(90deg, #16a34a, #15803d);
 }
+
+.goal-actions input {
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 8px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Fix hover */
+.goal-actions input:hover {
+  border-color: #aaa;
+}
+
+/* Fix focus */
+.goal-actions input:focus {
+  border: 2px solid #6adcff; /* green */
+}

@@ -126,13 +126,19 @@ export default function ChallengeAndSharedGoals() {
   const contribute = async (goalId, amount) => {
     try {
       const updated = await updateSharedGoalProgress(goalId, amount);
+
       setGoals((prev) =>
-        prev.map((g) => (g._id === updated._id ? updated : g))
+        prev.map((g) =>
+          g._id === updated._id
+            ? { ...updated, _contribution: "" } // reset input
+            : g
+        )
       );
     } catch {
       setErrGoals("Failed to update goal");
     }
   };
+
 
   // --- Create shared goal ---
   const createSharedGoal = async () => {
@@ -380,17 +386,40 @@ export default function ChallengeAndSharedGoals() {
                     </p>
 
                     <p>
-                      {goal.currentAmount || 0} / {goal.targetAmount} saved
+                      ${goal.currentAmount ?? 0} / ${goal.targetAmount} saved
                     </p>
+
                     <div className="goal-actions">
-                      {[5, 10, 20].map((amt) => (
-                        <button
-                          key={amt}
-                          onClick={() => contribute(goal._id, amt)}
-                        >
-                          +{amt}
-                        </button>
-                      ))}
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Amount"
+                        value={goal._contribution ?? ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          setGoals((prev) =>
+                            prev.map((g) =>
+                              g._id === goal._id
+                                ? { ...g, _contribution: value }
+                                : g
+                            )
+                          );
+                        }}
+                        className="contribution-input"
+                      />
+
+                      <button
+                        onClick={() => {
+                          const amount = Number(goal._contribution);
+                          if (!amount || amount <= 0) return;
+
+                          contribute(goal._id, amount);
+                        }}
+                      >
+                        Add
+                      </button>
+
                       <button
                         className="remove-btn"
                         onClick={() => deleteSharedGoal(goal._id)}
