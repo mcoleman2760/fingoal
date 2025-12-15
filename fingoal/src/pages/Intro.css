@@ -1,7 +1,239 @@
-.main {
+/* src/pages/Intro.css */
+
+.introPage {
+    min-height: 100vh;
+    padding: 40px 18px 70px;
+    background:
+      radial-gradient(900px 500px at 15% 0%, rgba(37,99,235,0.18), transparent 60%),
+      radial-gradient(900px 500px at 85% 20%, rgba(16,185,129,0.18), transparent 55%),
+      #f6f7fb;
+  }
+  
+  .introContainer {
+    max-width: 1050px;
+    margin: 0 auto;
+  }
+  
+  /* ---------- HERO ---------- */
+  .heroCard {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 18px;
+    background: linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #f8fafc 100%
+    );
+    border-radius: 20px;
+    padding: 26px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 14px 40px rgba(15,23,42,0.10);
+  }
+  
+  .heroBadge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #1e40af;
+    background: rgba(37,99,235,0.15);
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  
+  .heroTitle {
+    margin: 0;
+    font-size: 36px;
+    line-height: 1.15;
+    letter-spacing: -0.7px;
+    color: #0f172a;
+  }
+  
+  .heroName {
+    background: linear-gradient(90deg, #2563eb, #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .heroSub {
+    margin-top: 10px;
+    color: #475569;
+    font-size: 15px;
+    max-width: 520px;
+  }
+  
+  /* ---------- BUTTONS ---------- */
+  .heroActions {
+    margin-top: 18px;
     display: flex;
-    justify-content: center; /* Centers horizontally */
-    align-items: center;    /* Centers vertically */
-    height: 80vh;          /* Ensures the container takes up the full viewport height */
-    width: 100vw; 
-}
+    gap: 12px;
+  }
+  
+  .btnPrimary {
+    background: linear-gradient(90deg, #2563eb, #22c55e);
+    color: white;
+    font-weight: 800;
+    padding: 12px 18px;
+    border-radius: 14px;
+    text-decoration: none;
+    box-shadow: 0 12px 26px rgba(37,99,235,0.28);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  
+  .btnPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(37,99,235,0.35);
+  }
+  
+  .btnGhost {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 800;
+    padding: 12px 18px;
+    border-radius: 14px;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  
+  /* ---------- RIGHT STATS ---------- */
+  .heroRight {
+    display: grid;
+    gap: 14px;
+  }
+  
+  .miniStat {
+    background: linear-gradient(
+      135deg,
+      #0f172a,
+      #020617
+    );
+    color: white;
+    border-radius: 18px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  
+  .miniLabel {
+    font-size: 12px;
+    opacity: 0.8;
+    font-weight: 700;
+  }
+  
+  .miniValue {
+    margin-top: 6px;
+    font-size: 20px;
+    font-weight: 900;
+  }
+  
+  .miniHint {
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: 0.75;
+  }
+  
+  /* ---------- SECTIONS ---------- */
+  .sectionTitle {
+    margin: 26px 0 12px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  
+  /* ---------- CARDS ---------- */
+  .grid3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  
+  .grid2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .actionCard {
+    background: linear-gradient(
+      180deg,
+      #ffffff,
+      #f8fafc
+    );
+    border-radius: 18px;
+    padding: 18px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 10px 26px rgba(15,23,42,0.08);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  
+  .actionCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 38px rgba(15,23,42,0.12);
+  }
+  
+  .actionIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #22c55e);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    color: white;
+    margin-bottom: 12px;
+  }
+  
+  .actionTitle {
+    font-weight: 900;
+    font-size: 15px;
+  }
+  
+  .actionText {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #475569;
+  }
+  
+  /* ---------- INFO ---------- */
+  .infoCard {
+    background: linear-gradient(
+      135deg,
+      rgba(37,99,235,0.08),
+      rgba(34,197,94,0.08)
+    );
+    border-radius: 18px;
+    padding: 18px;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  
+  .infoTitle {
+    font-weight: 900;
+    font-size: 15px;
+  }
+  
+  .infoText {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #475569;
+  }
+  
+  .linkArrow {
+    display: inline-block;
+    margin-top: 10px;
+    font-weight: 800;
+    color: #2563eb;
+    text-decoration: none;
+  }
+  
+  /* ---------- MOBILE ---------- */
+  @media (max-width: 900px) {
+    .heroCard {
+      grid-template-columns: 1fr;
+    }
+    .grid3,
+    .grid2 {
+      grid-template-columns: 1fr;
+    }
+  }

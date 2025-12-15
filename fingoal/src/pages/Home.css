@@ -1,6 +1,351 @@
-.trouble{
+.fg-page {
+  min-height: 100vh;
+  padding: 48px 16px;
+  background:
+    radial-gradient(900px 500px at 20% 5%, rgba(34, 197, 94, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 80% 0%, rgba(59, 130, 246, 0.12), transparent 55%),
+    #f7f8fb;
+}
 
+.fg-shell {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.fg-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+  overflow: hidden;
+}
+
+.fg-cardHeader {
+  padding: 22px 22px 14px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.06);
+}
+
+.fg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f766e;
+  background: rgba(20, 184, 166, 0.12);
+  padding: 6px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.fg-title {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.fg-subtitle {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.fg-muted {
+  color: #64748b;
+  margin-left: 8px;
+}
+
+/* ---------- Drop / file picker ---------- */
+.fg-drop {
+  margin: 18px 22px 0;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px dashed rgba(15, 23, 42, 0.25);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.fg-dropLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fg-dropIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  font-size: 18px;
+}
+
+.fg-dropTitle {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fg-dropHint {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.fg-fileBtn {
+  cursor: pointer;
+  user-select: none;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.fg-fileBtn:hover {
+  transform: translateY(-1px);
+  background: rgba(59, 130, 246, 0.16);
+}
+
+.fg-fileInput {
+  display: none;
+}
+
+/* ---------- Selected files ---------- */
+.fg-files {
+  margin: 16px 22px 0;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  background: #ffffff;
+}
+
+.fg-filesTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.fg-filesTitle {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fg-linkBtn {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+
+.fg-linkBtn:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.fg-fileList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.fg-fileItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.fg-fileName {
+  font-weight: 650;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fg-fileMeta {
+  color: #64748b;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ---------- Actions ---------- */
+.fg-actions {
+  margin: 18px 22px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 18px;
+}
+
+.fg-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.fg-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fg-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.fg-btnPrimary {
+  background: linear-gradient(90deg, #2563eb, #22c55e);
+  color: #ffffff;
+}
+
+.fg-btnGhost {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.fg-btnDanger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+/* ---------- Alerts ---------- */
+.fg-alert {
+  margin: 0 22px 18px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.fg-alertSuccess {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: #166534;
+}
+
+.fg-alertError {
+  background: rgba(220, 38, 38, 0.10);
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  color: #991b1b;
+}
+
+.fg-footer {
+  padding: 14px 22px 20px;
+  border-top: 1px solid rgba(17, 24, 39, 0.06);
   display: flex;
   justify-content: center;
-    margin-top: 10px;
+}
+
+.fg-help {
+  font-weight: 800;
+  color: #6d28d9;
+  text-decoration: underline;
+}
+
+/* ---------- Auth page (signed out) ---------- */
+.fg-authPage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(900px 500px at 20% 5%, rgba(34, 197, 94, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 80% 0%, rgba(59, 130, 246, 0.12), transparent 55%),
+    #f7f8fb;
+}
+
+.fg-authCard {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+  padding: 22px;
+}
+
+.fg-authTitle {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.fg-authTabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.fg-tab {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.fg-tabActive {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.fg-authForm {
+  display: grid;
+  gap: 10px;
+}
+
+.fg-input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  outline: none;
+}
+
+.fg-input:focus {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.fg-authBtn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.fg-authMsg {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.fg-authErr {
+  color: #dc2626;
+}
+
+.fg-authOk {
+  color: #16a34a;
 }
