@@ -84,6 +84,19 @@ const styles = {
 };
 
 // --- App Root ---
+
+function RootRedirect() {
+  const { user } = useAuth();
+
+  // not signed in → /upload
+  if (!user) {
+    return <Navigate to="/upload" replace />;
+  }
+
+  // signed in → /home
+  return <Navigate to="/home" replace />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -91,6 +104,8 @@ export default function App() {
         <Router>
           <Nav />
           <Routes>
+            <Route path="/" element={<RootRedirect />} />
+
             {/* Public */}
             <Route path="/upload" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -137,7 +152,7 @@ export default function App() {
               }
             />
             <Route
-              path="/shared-goals" 
+              path="/shared-goals"
               element={
                 <ProtectedRoute>
                   <SharedGoals />
@@ -145,7 +160,7 @@ export default function App() {
               }
             />
             <Route
-              path="/instructions" 
+              path="/instructions"
               element={
                 <ProtectedRoute>
                   <Instructions />

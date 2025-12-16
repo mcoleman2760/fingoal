@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { loginUser } from "../auth/authService";
+import { useNavigate } from "react-router-dom";
+
 
 
 export default function Login() {
@@ -7,6 +9,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   
+  const navigate = useNavigate();
+
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -79,7 +83,14 @@ export default function Login() {
               required
               style={inputStyle}
             />
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <button
+                type="button"
+                style={btnStyle}
+                onClick={() => navigate("/upload")}
+              >
+                Back
+              </button>
               <button type="submit" style={btnStyle}>
                 Sign in
               </button>

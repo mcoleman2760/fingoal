@@ -254,7 +254,9 @@ export default function Home() {
   return (
     <div className="fg-authPage">
       <div className="fg-authCard">
-        <h1 className="fg-authTitle">{mode === "signin" ? "Sign In" : "Sign Up"}</h1>
+        <h1 className="fg-authTitle">
+          {mode === "signin" ? "Sign In" : "Sign Up"}
+        </h1>
 
         <div className="fg-authTabs">
           <button
@@ -272,32 +274,39 @@ export default function Home() {
         </div>
 
         <form onSubmit={handleAuthSubmit} className="fg-authForm">
+          {/* SIGN UP MODE */}
           {mode === "signup" && (
-            <input
-              className="fg-input"
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
+            <>
+              <input
+                className="fg-input"
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+
+              <input
+                className="fg-input"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              <input
+                className="fg-input"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </>
           )}
 
-          <input
-            className="fg-input"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <input
-            className="fg-input"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
+          {/* SIGN IN MODE → button only */}
           <button className="fg-btn fg-btnPrimary fg-authBtn" type="submit">
             {mode === "signup" ? "Create Account" : "Sign In Here"}
           </button>
